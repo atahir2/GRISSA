@@ -153,3 +153,102 @@ Symptoms fixed in-repo: **middleware no longer depends on Supabase** for Postgre
 3. **Reverse proxy** must pass **`/_next/static`**, **`/_next/data`**, and other **`/_next/*`** to Node (or JS routes break). **`public`** files resolve as **`{basePath}/your-file`** — e.g. logos at **`/grissa/acknowledgements/…`**. **`unoptimized`** `next/image` can emit **`/acknowledgements/…`** without the prefix unless you pass URLs from **`assetUrl()`** (`src/lib/base-path.ts`).
 
 4. **Same-origin API calls:** use **`appFetch()`** / **`withBasePath()`** from `src/lib/base-path.ts` instead of raw **`fetch("/api/…")`**. **`AuthSessionProvider`** sets **`SessionProvider basePath={withBasePath("/api/auth")}`** so NextAuth client (`signIn`, `useSession`, CSRF) calls **`{basePath}/api/auth/*`** (NextAuth’s default client URL logic does not know Next.js `basePath` unless this is set).
+
+5. **Use the production env file for production stacks.** Set **`COMPOSE_ENV_FILE_PATH=.env.production`** in `.env.production` (see `.env.production.example`). If you omit it, Compose defaults to **`.env.docker`** (`NEXTAUTH_URL=http://localhost:3000`, empty `NEXT_PUBLIC_BASE_PATH`) even when you pass `--env-file .env.production` on the CLI — the **mounted** env inside containers still comes from the default unless `COMPOSE_ENV_FILE_PATH` is set. After changing env, recreate the app:  
+   `docker compose --env-file .env.production up -d --build app`
+
+## Production deployment checklist
+
+Use this on a server (e.g. behind nginx at `/grissa`):
+
+1. Copy **`.env.production.example`** → **`.env.production`**; set strong secrets and **`COMPOSE_ENV_FILE_PATH=.env.production`**.
+2. Set **`DATABASE_URL`** with host **`postgres`** (Compose service name), not `localhost`.
+3. Set **`NEXTAUTH_URL`** to the public app root **including `basePath`**, e.g. `https://mc-a4.lab.uvalight.net/grissa` — **not** `…/grissa/saq` and not `http://localhost:3000`.
+4. Set **`NEXT_PUBLIC_BASE_PATH=/grissa`** (or your subpath); **rebuild** the `app` image after any change.
+5. Start Postgres → run **migrate** → build and start **app** (see [§2](#2-recommended-startup-order-first-deploy-or-after-schema-changes)).
+6. Confirm **PostgreSQL `pg_hba.conf`** allows the app container (see [§8](#8-troubleshooting-sign-up--sign-in-database--auth)).
+7. Smoke-test: sign up, sign in, open Workspace, create an assessment.
+
+## 8. Troubleshooting sign-up / sign-in (database + auth)
+
+Symptoms: **Registration failed**, **Sign in failed**, or API errors mentioning **`Failed query`** / **`pg_hba.conf rejects connection`**. The UI and static assets may still load fine.
+
+### A. Wrong env file inside containers
+
+Check what the app actually sees:
+
+```bash
+docker exec saq-app env | grep -E 'NEXTAUTH_URL|NEXT_PUBLIC_BASE_PATH|SAQ_DATABASE'
+```
+
+| Expected (subpath example) | Wrong (common) |
+|----------------------------|----------------|
+| `NEXTAUTH_URL=https://host/grissa` | `NEXTAUTH_URL=http://localhost:3000` |
+| `NEXT_PUBLIC_BASE_PATH=/grissa` (baked at build + runtime) | empty base path while nginx serves `/grissa` |
+
+Fix: set **`COMPOSE_ENV_FILE_PATH=.env.production`** in `.env.production`, fix values, then  
+`docker compose --env-file .env.production up -d --build app`.
+
+### B. PostgreSQL `pg_hba.conf` blocks the app container
+
+The app connects to Postgres as the user in **`DATABASE_URL`** (often **`postgres`**) over the **Docker bridge network** (e.g. client IP `172.22.x.x`). Postgres uses the **first matching rule** in **`pg_hba.conf`**.
+
+A frequent production issue: **hardening rules at the top of the file** that reject remote `postgres` logins:
+
+```text
+host all postgres 0.0.0.0/0 reject
+host all postgres ::/0 reject
+```
+
+These match **before** any `hostnossl … 172.16.0.0/12 …` rules added at the bottom, so **`saq-app` cannot connect** even on the internal Compose network. Sign-up and login both fail because every auth path hits the database.
+
+**Inspect rules (note line numbers):**
+
+```bash
+docker exec grisc-postgres grep -n '^host' /var/lib/postgresql/data/pg_hba.conf
+docker exec grisc-postgres psql -U postgres -d grisc_sa -c \
+  "SELECT line_number, type, user_name, address, auth_method FROM pg_hba_file_rules WHERE type LIKE 'host%' ORDER BY line_number;"
+```
+
+**Fix (allow Compose network above reject rules):** insert at **line 1** of `pg_hba.conf` (Postgres in this stack has **`ssl=off`**, so use **`hostnossl`**):
+
+```text
+hostnossl all all 172.16.0.0/12 scram-sha-256
+```
+
+Commands on the server:
+
+```bash
+docker exec grisc-postgres grep -q '172.16.0.0/12' /var/lib/postgresql/data/pg_hba.conf || \
+  docker exec grisc-postgres sed -i '1i hostnossl all all 172.16.0.0/12 scram-sha-256' /var/lib/postgresql/data/pg_hba.conf
+
+docker restart grisc-postgres
+```
+
+`172.16.0.0/12` covers typical Docker bridge subnets (`172.16.x`–`172.31.x`). If your network uses a different range, adjust the CIDR or add a line for your subnet (e.g. `172.22.0.0/16`).
+
+**Do not** rely on **`pg_reload_conf()`** alone after reordering rules — **`docker restart grisc-postgres`** is safer.
+
+**Optional hardening:** use a dedicated DB role (e.g. `grisc_app`) in **`DATABASE_URL`** instead of the **`postgres`** superuser, and keep superuser `reject` rules for external IPs only — but always place an **allow** rule for the Compose network **before** any broad **reject** for the app user.
+
+Reference snippet (also in `scripts/postgres-pg_hba-docker.snippet`):
+
+```text
+# Allow non-SSL TCP from Docker Compose bridge networks (must be BEFORE reject rules for the app DB user).
+hostnossl all all 172.16.0.0/12 scram-sha-256
+```
+
+Changes live in the **`saq_postgres_data`** volume; they survive app restarts but must be reapplied if you recreate the Postgres volume with **`down -v`**.
+
+### C. Verify database connectivity from the app container
+
+```bash
+docker exec -w /app saq-app node -e \
+  "require('pg').Pool.prototype.query.call(new (require('pg').Pool)({connectionString:process.env.DATABASE_URL}),'select 1').then(()=>console.log('DB_OK')).catch(e=>console.log('DB_FAIL',e.code,e.message))"
+```
+
+- **`DB_OK`** — database reachable; if auth still fails, check **`NEXTAUTH_URL`** / cookies / proxy TLS.
+- **`DB_FAIL 28000 … pg_hba.conf`** — see [§8.B](#b-postgresql-pg_hbaconf-blocks-the-app-container).
+- **`DB_FAIL 28P01`** — wrong password in **`DATABASE_URL`** vs Postgres user password.
+
+After **`DB_OK`**, retry sign-up and sign-in in the browser.
