@@ -10,3 +10,4 @@ docker compose exec -T postgres \
 # scp $NEW_DUMP_FILE backup-user@backup-server:/
 set -a; source .env.production; set +a;
 scp "$NEW_DUMP_FILE" $SERVER_BACKUP_USER@$SERVER_BACKUP:/home/goncalo/grissa_backup/
+# New thing
