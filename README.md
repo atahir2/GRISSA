@@ -56,9 +56,9 @@ The tool supports internal decision-making as well as preparation for sustainabi
 
 * **Frontend:** Next.js (App Router), React
 * **Styling:** Tailwind CSS
-* **Backend / DB:** Supabase
+* **Backend / DB:** PostgreSQL (Drizzle ORM; optional Supabase path where still wired)
 * **Data Model:** JSON-based questionnaire + relational persistence
-* **Export:** HTML-based PDF rendering
+* **Export:** PDF via `@react-pdf/renderer` (engine-derived data)
 
 ---
 
@@ -74,7 +74,7 @@ The system follows a modular architecture:
 ### 2. Runtime Assessment Layer
 
 * Stores user responses and scope selections
-* Managed via Supabase
+* Managed via the configured repository (**Postgres** or legacy **Supabase** via `SAQ_DATABASE_PROVIDER`)
 
 ### 3. SAQ Engine
 
@@ -93,8 +93,7 @@ Located in `src/lib/saq/engine/`
 
 ### 5. Report & Export Layer
 
-* Report page acts as source of truth
-* PDF generated from rendered HTML (preserving layout and styling)
+* Report page composes engine outputs; PDF is generated with `@react-pdf/renderer` (`AssessmentReportPDF`)
 
 ---
 
@@ -132,12 +131,18 @@ npm install
 
 ### 2. Configure environment
 
-Create a `.env.local` file:
+For **PostgreSQL + NextAuth** (recommended), create `.env.local` with at least:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+SAQ_DATABASE_PROVIDER=postgres
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-long-random-secret
 ```
+
+Set `NEXTAUTH_SECRET` to a strong value (never commit real secrets).
+
+A legacy Supabase-based setup may still require `NEXT_PUBLIC_SUPABASE_*` variables where that code path is enabled.
 
 ### 3. Run the development server
 
@@ -153,12 +158,76 @@ http://localhost:3000
 
 ---
 
+## Docker (full stack)
+
+The **`app` image is production-only** — it does **not** include `drizzle-kit`. Apply schema changes with the Compose **`migrate`** service (or `npm run db:migrate` on the host), **never** by exec’ing into `saq-app`. Details: **[docs/DOCKER.md](docs/DOCKER.md)**.
+
+**Typical first-time / production-style sequence** (use `.env.production` or your env file; ensure `DATABASE_URL` uses host **`postgres`** inside Compose):
+
+```bash
+docker compose --env-file .env.production up -d postgres
+docker compose --profile migrate --env-file .env.production run --rm migrate
+docker compose --env-file .env.production up -d --build app
+```
+
+**Local dev** (`.env.docker`): `npm run docker:up`, then `npm run docker:migrate` once. App: [http://localhost:3000](http://localhost:3000) · Adminer: [http://localhost:8080](http://localhost:8080).
+
+Stopping: `docker compose --env-file .env.docker down` (`npm run docker:down`).  
+**Never use `down -v` unless you intend to wipe the database volume.**
+
+Copy `.env.docker.example` → `.env.docker`, or `.env.production.example` → `.env.production` (see `COMPOSE_ENV_FILE_PATH` in the example).
+
+---
+
+## Database tooling (npm)
+
+- `npm run db:generate` — generate Drizzle migrations from `drizzle/schema.ts`
+- `npm run db:migrate` — apply migrations (requires `DATABASE_URL`)
+- `npm run db:studio` — Drizzle Studio against the configured database
+
+Compose helpers:
+
+- `npm run docker:up` / `docker:down` / `docker:migrate` (`.env.docker`) / `docker:migrate:prod` (`.env.production`)
+
+---
+
 ## Development Guidelines
 
 * Business logic must remain inside `src/lib/saq/engine/`
 * Do not persist derived results (scores, actions) in the database
 * The report page must remain the single source of truth for PDF export
 * UI components should consume engine outputs, not reimplement logic
+
+---
+
+## Navigation and Workflow
+
+Authenticated flow:
+
+1. Login / signup
+2. `/saq` (GRISSA introduction page)
+3. `/saq/manage` (assessment workspace)
+   - start new assessment
+   - resume/open assessment
+   - view dashboard/report
+   - manage team/access and versions (role-dependent)
+   - delete assessment (owner only, with confirmation)
+4. `/saq/assessment/[assessmentId]`
+   - step-based assessment workflow
+   - explicit **Save progress** button (scope, answers, action metadata)
+5. `/saq/dashboard/[assessmentId]` and `/saq/report/[assessmentId]`
+   - clear navigation back to assessment editor and assessment workspace
+
+Branding:
+- Tool label: **GRISSA**
+- Expanded form: **Green Research Infrastructure Sustainability Self Assessment**
+- Main nav items: **Home** and **Workspace**
+
+Role-aware behavior:
+
+- Owner: delete, manage team access, create versions, edit draft content
+- Editor: edit draft content, create versions
+- Reviewer/Viewer: read-only access
 
 ---
 

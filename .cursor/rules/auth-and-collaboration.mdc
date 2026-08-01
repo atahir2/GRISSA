@@ -1,0 +1,36 @@
+---
+description: Auth, routes, collaboration roles, and permission helpers
+globs: "{src/lib/auth/**/*.ts,src/lib/saq/permissions.ts,middleware.ts,src/app/api/auth/**/*.ts,src/app/auth/**/*.tsx,src/app/login/**/*.tsx,src/app/signup/**/*.tsx,src/lib/supabase/middleware.ts,src/components/auth/**/*.tsx,src/components/saq/SaqAuthenticatedHeader.tsx}"
+alwaysApply: false
+---
+
+# Auth and Collaboration Rules
+
+## Authentication
+
+- **Primary app auth:** **NextAuth** (credentials) with PostgreSQL-backed users via Drizzle adapter (`src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`). Client surfaces **`SessionProvider`** and **`useSession`** (e.g. **`SaqAuthenticatedHeader`**: Login / Sign up when logged out; signed-in label + Logout; post-logout redirect configurable via env).
+- **`AuthSessionProvider`:** wraps **`SessionProvider`** with **`basePath={withBasePath("/api/auth")}`** so NextAuth client calls (`signIn`, session polling, CSRF) target **`{basePath}/api/auth/*`** when the app uses Next.js `basePath`.
+- **`middleware.ts`:** gate **assessment / dashboard / report** with **`next-auth/jwt`** `getToken` (no Supabase requirement). If `NEXT_PUBLIC_SUPABASE_*` are set, Supabase middleware refreshes auth cookies but does not replace the NextAuth gate.
+- **Public:** `/saq` intro (**`SaqIntro`**), `/login`, `/signup`, `/saq/manage` etc. are **not** behind middleware; **`/saq/assessment/*`**, **`/saq/dashboard/*`**, **`/saq/report/*`** → redirect to Login with `next=…` when there is no JWT.
+- **OAuth / legacy email code exchange:** `/auth/callback` may still exchange `?code=` via Supabase where that path is enabled; credentials sign-up/sign-in flows use NextAuth forms.
+
+## Persistence (auth-related tables)
+
+- **`profiles`** — one row per `auth.users` user (optional `full_name`, `organisation_name`).
+- **`assessments.owner_user_id`** — required; creator is owner.
+- **`assessment_collaborators`** — `assessment_id`, `user_id`, `role` (`owner` | `editor` | `reviewer` | `viewer`), `invited_by`; owner row mirrors ownership. RLS uses `SECURITY DEFINER` helpers (e.g. `rls_user_has_assessment_access`) to avoid policy recursion on collaborators.
+
+## Permissions (single source of truth)
+
+- **`src/lib/saq/permissions.ts`** — `canViewAssessment`, `canEditAssessment`, `canManageCollaborators`, `canExportReport`, `canAccessDashboard`, etc. Use these instead of scattering role string checks in UI.
+- **Repository:** `assessment.repository.ts` enforces access via `getAssessmentAccess`, RLS, and save/load guards.
+
+## UI
+
+- **Collaborators:** `AssessmentCollaboratorsPanel` on assessment flow; listing uses RPC where needed for emails.
+- **Read-only:** viewers/reviewers get non-editable steps; use permission helpers + props (`readOnly`), not duplicate engine logic.
+
+## Boundaries
+
+- Do not persist derived SAQ results in DB; auth/collaboration tables are identity and access only.
+- Engine modules remain free of Supabase and auth imports.

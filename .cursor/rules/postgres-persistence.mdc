@@ -1,0 +1,24 @@
+---
+description: PostgreSQL + Drizzle persistence path for SAQ runtime data
+globs: "{src/lib/db/**/*.ts,drizzle/**/*.ts,src/lib/saq/repositories/assessment.repository.postgres.ts,drizzle.config.ts}"
+alwaysApply: false
+---
+
+# PostgreSQL / Drizzle Persistence
+
+Runtime SAQ data uses **`DATABASE_URL`** and **`src/lib/db/drizzle.ts`** (connection pool + Drizzle client).
+
+## Selection
+
+- **`SAQ_DATABASE_PROVIDER=postgres`** selects `repositories/assessment.repository.postgres.ts` via `assessment.repository.selector.ts`.
+- Schema: **`drizzle/schema.ts`** · migrations: **`drizzle/migrations/`** · config: **`drizzle.config.ts`** (`npm run db:generate` / `db:migrate` / `db:studio`).
+
+## Boundaries (same as legacy Supabase path)
+
+- Persist only **runtime state** (assessments, scope, answers, action metadata, collaborators as modeled); **never** persist derived engine outputs (scores, summaries, interpretation text, action priorities as stored aggregates).
+- Static questionnaire remains **file-based** only.
+- Map DB rows to domain types in the repository; keep engine modules free of `pg` / Drizzle imports.
+
+## Operations
+
+- Local/CI database: see **`docs/DOCKER.md`** — run **`docker compose --profile migrate run --rm migrate`** (or host `npm run db:migrate`). **Do not** run migrations inside the production **`app`** container; it has no `drizzle-kit`.

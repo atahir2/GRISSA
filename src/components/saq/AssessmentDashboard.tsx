@@ -7,11 +7,13 @@ import { buildAssessmentResults } from "@/src/lib/saq/engine/results";
 import { buildActionPlan, type ExistingActionMetadata } from "@/src/lib/saq/engine/actions";
 import { buildAssessmentInterpretation } from "@/src/lib/saq/engine/interpretation";
 import {
-  getAssessmentById,
+  getAssessmentAccess,
   loadScopeSelections,
   loadAnswers,
   loadActionMetadata,
 } from "@/src/lib/saq/assessment.repository";
+import type { AssessmentRole } from "@/src/lib/saq/permissions";
+import { useAssessmentVersionRoute } from "./useAssessmentVersionRoute";
 import type { ScopeSelection, AssessmentAnswer } from "@/src/lib/saq/engine/results";
 import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
 import { DashboardSummaryCard } from "./DashboardSummaryCard";
@@ -24,15 +26,25 @@ import { ReadinessHeroCard } from "./ReadinessHeroCard";
 import { StrengthsImprovementPanel } from "./StrengthsImprovementPanel";
 import { ThemeReadinessSnapshot } from "./ThemeReadinessSnapshot";
 import { StrategicRecommendationsCard } from "./StrategicRecommendationsCard";
+import { GrissaPageHeader } from "./GrissaPageHeader";
 
 interface AssessmentDashboardProps {
   assessmentId: string;
 }
 
 export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) {
-  const [loading, setLoading] = useState(true);
+  const {
+    versions,
+    versionsLoading,
+    versionError,
+    effectiveVersionId,
+    currentVersion,
+  } = useAssessmentVersionRoute(assessmentId);
+
+  const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assessmentName, setAssessmentName] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<AssessmentRole | null>(null);
   const [createdAt, setCreatedAt] = useState<Date | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [scopeSelections, setScopeSelections] = useState<ScopeSelection[]>([]);
@@ -47,19 +59,22 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
   const { scopeItems } = useMemo(() => getQuestionnaireConfig(), []);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (!effectiveVersionId || versionsLoading) return;
+    setDataLoading(true);
     setError(null);
     try {
-      const [assessment, scope, ans, meta] = await Promise.all([
-        getAssessmentById(assessmentId),
-        loadScopeSelections(assessmentId),
-        loadAnswers(assessmentId),
-        loadActionMetadata(assessmentId),
-      ]);
-      if (!assessment) {
+      const access = await getAssessmentAccess(assessmentId);
+      if (!access) {
         setError("Assessment not found.");
         return;
       }
+      setMyRole(access.myRole);
+      const assessment = access.assessment;
+      const [scope, ans, meta] = await Promise.all([
+        loadScopeSelections(assessmentId, effectiveVersionId),
+        loadAnswers(assessmentId, effectiveVersionId),
+        loadActionMetadata(assessmentId, effectiveVersionId),
+      ]);
       setAssessmentName(assessment.organisationName);
       setCreatedAt(assessment.createdAt instanceof Date ? assessment.createdAt : new Date(assessment.createdAt));
       setUpdatedAt(assessment.updatedAt instanceof Date ? assessment.updatedAt : new Date(assessment.updatedAt as string));
@@ -93,13 +108,19 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load assessment.");
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
-  }, [assessmentId, scopeItems]);
+  }, [assessmentId, scopeItems, effectiveVersionId, versionsLoading]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const combinedError = versionError || error;
+  const loading =
+    versionsLoading ||
+    dataLoading ||
+    (!!assessmentId && !effectiveVersionId && !versionError);
 
   const assessmentResults = useMemo(
     () => buildAssessmentResults(scopeSelections, answers),
@@ -125,8 +146,8 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+      <main className="min-h-0 flex-1 bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="rounded-xl border border-slate-200 bg-white p-12 shadow-sm text-center">
             <p className="text-slate-700 font-medium">Loading dashboard…</p>
             <p className="mt-1 text-sm text-slate-500">Fetching your assessment data.</p>
@@ -137,18 +158,18 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
     );
   }
 
-  if (error) {
+  if (combinedError) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+      <main className="min-h-0 flex-1 bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
             <p className="font-medium">Could not load assessment</p>
-            <p className="mt-1 text-sm">{error}</p>
+            <p className="mt-1 text-sm">{combinedError}</p>
             <Link
-              href="/saq"
+              href="/saq/manage"
               className="mt-4 inline-flex items-center rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50"
             >
-              Back to SAQ
+              Back to assessments
             </Link>
           </div>
         </div>
@@ -159,60 +180,102 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
   const formatDate = (d: Date) => d.toLocaleDateString(undefined, { dateStyle: "medium" });
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-12">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
+    <main className="min-h-0 flex-1 bg-transparent pb-12">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <GrissaPageHeader
+          title="GRISSA Dashboard"
+          description="Key metrics and progress for this assessment version — completion, readiness, themes, and recommended actions."
+        />
+
+        <div className="mb-4">
+          <DashboardInfoBanner />
+        </div>
+
+
         <header className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <Link
-                href="/saq"
-                className="text-xs font-medium text-slate-500 hover:text-slate-700"
-              >
-                ← Back to assessments
-              </Link>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-                  {assessmentName}
-                </h1>
-                <span
-                  className={
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide " +
-                    (isCompleted
-                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                      : "bg-amber-50 text-amber-800 border border-amber-200")
-                  }
-                >
-                  {isCompleted ? "Completed" : "In progress"}
-                </span>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+            <dl className="flex min-w-0 flex-col gap-2 text-xs text-slate-600 lg:max-w-[40%]">
+              <div>
+                <dt className="inline font-medium text-slate-500">Organisation:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {assessmentName ?? "—"}
+                </dd>
               </div>
-              <p className="mt-1 text-sm text-slate-600">
-                Sustainability Self-Assessment — key metrics and progress for this assessment.
-              </p>
-              <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-0 text-xs text-slate-500">
-                <span>Created {createdAt ? formatDate(createdAt) : "—"}</span>
-                <span>Updated {updatedAt ? formatDate(updatedAt) : "—"}</span>
-              </dl>
-            </div>
-            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+              <div>
+                <dt className="inline font-medium text-slate-500">Version:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {currentVersion
+                    ? `v${currentVersion.versionNumber} (${currentVersion.status})`
+                    : "—"}
+                </dd>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <dt className="font-medium text-slate-500">Status:</dt>
+                <dd className="m-0">
+                  <span
+                    className={
+                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide " +
+                      (isCompleted
+                        ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                        : "bg-amber-50 text-amber-800 ring-1 ring-amber-200")
+                    }
+                  >
+                    {isCompleted ? "Completed" : "In progress"}
+                  </span>
+                </dd>
+              </div>
+            </dl>
+
+            <dl className="flex min-w-[10rem] flex-col gap-2 text-xs text-slate-600 lg:flex-1 lg:items-start lg:self-stretch xl:mx-auto xl:max-w-sm">
+              <div>
+                <dt className="inline font-medium text-slate-500">Created:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {createdAt ? formatDate(createdAt) : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="inline font-medium text-slate-500">Updated:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {updatedAt ? formatDate(updatedAt) : "—"}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="flex shrink-0 flex-col gap-2 lg:items-end">
               <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 Quick actions
               </span>
               <div className="flex flex-wrap gap-2">
                 <Link
-                  href={`/saq/assessment/${assessmentId}`}
+                  href={
+                    effectiveVersionId
+                      ? `/saq/assessment/${assessmentId}?versionId=${effectiveVersionId}`
+                      : `/saq/assessment/${assessmentId}`
+                  }
                   className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 >
                   Resume assessment
                 </Link>
                 <Link
-                  href={`/saq/report/${assessmentId}`}
+                  href={
+                    effectiveVersionId
+                      ? `/saq/report/${assessmentId}?versionId=${effectiveVersionId}`
+                      : `/saq/report/${assessmentId}`
+                  }
                   className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 >
                   View report
                 </Link>
                 <Link
-                  href={`/saq/report/${assessmentId}`}
+                  href={
+                    effectiveVersionId
+                      ? `/saq/report/${assessmentId}?versionId=${effectiveVersionId}`
+                      : `/saq/report/${assessmentId}`
+                  }
                   className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                 >
                   Export PDF
@@ -222,10 +285,15 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
           </div>
         </header>
 
-        {/* Contextual note */}
-        <div className="mb-4">
-          <DashboardInfoBanner />
-        </div>
+        {myRole && effectiveVersionId && versions.length > 1 && (
+          <div className="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            Currently Viewing Version:{" "}
+            <span className="font-medium text-slate-900">
+              {currentVersion ? `v${currentVersion.versionNumber}` : "unknown"}
+            </span>
+            . Manage versions from Workspace.
+          </div>
+        )}
 
         {/* Assessment interpretation */}
         <section className="mb-10 space-y-5">
@@ -291,7 +359,7 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
         </DashboardSection>
 
         {/* Capability summary */}
-        <div className="border-t border-slate-200 pt-10 mb-12">
+        <div className="border-t border-slate-600 pt-10 mb-12">
           <DashboardSection
             title="Capability summary"
             subtitle="Number of questions meeting each pass level (1–3). Higher levels indicate stronger capability."
@@ -395,9 +463,9 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
           </div>
         </DashboardSection>
 
-        <p className="text-center text-sm text-slate-500">
-          <Link href="/saq" className="text-emerald-600 hover:underline">
-            Back to SAQ
+        <p className="text-center text-sm text-slate-400">
+          <Link href="/saq" className="text-emerald-400 hover:text-emerald-300 hover:underline">
+            Back to Assessment
           </Link>
         </p>
       </div>

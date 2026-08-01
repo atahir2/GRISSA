@@ -1,29 +1,40 @@
 ---
 description: UI rules for SAQ dashboard and report/export pages
-globs: "{src/components/saq/**/*.tsx,src/app/saq/dashboard/**/*.tsx,src/app/saq/report/**/*.tsx}"
+globs: "{src/components/saq/**/*.tsx,src/app/saq/dashboard/**/*.tsx,src/app/saq/report/**/*.tsx,src/app/saq/layout.tsx}"
 alwaysApply: false
 ---
 
 # Dashboard and Report UI Rules
 
-Applies to `src/components/saq/`, `src/app/saq/dashboard/`, and `src/app/saq/report/`.
+Applies to `src/components/saq/`, `src/app/saq/dashboard/`, `src/app/saq/report/`, and shared SAQ chrome under `src/app/saq/layout.tsx`.
+
+## Shared SAQ shell
+
+- **`app/saq/layout.tsx`** wraps SAQ routes with **`SaqAuthenticatedHeader`** (nav: Home, Workspace, contextual links) and a **dark canvas** (`bg-slate-900`) background; content cards stay **light** (`border-slate-200`, `bg-white`) for contrast.
+- Page titles use **`GrissaPageHeader`** / **`GrissaPageTitleStrip`** (gradient **GRISSA** title + subtitle). Subtitle tone defaults to **canvas** (light text on dark); use **`descriptionTone="onLight"`** inside white/print blocks only.
 
 ## Dashboard
 
 - Keep dashboard hierarchy clear: at-a-glance metrics, capability/priority summaries, theme and action distribution.
 - Use engine outputs as source data.
+- **`DashboardInfoBanner`** — contextual copy on the dark canvas (aligned styling with report banner).
+- **`DashboardSection`** — section headings use **`headingSurface="canvas"`** by default (light heading text outside white cards).
+- **`ReadinessHeroCard`** — hero block for interpretation summary; keep flat white card + semantic accent (no heavy gradients) so text stays legible.
+- Users without edit access should see read-only UX where applicable; defer access rules to `permissions.ts` + repository (not new scoring logic here).
 
 ## Report and PDF
 
+- **`ReportInfoBanner`** — same role as dashboard banner (purpose/disclaimer on dark canvas); **`print:hidden`** so print layout relies on in-card / print-only strips where needed.
+- **`ReportPurposeNote`** may be **screen-hidden** when the banner carries the same copy; keep browser-print/PDF flow coherent.
 - Keep report content hierarchy aligned across web report and PDF output.
-- PDF generation is implemented via `AssessmentReportPDF` (`@react-pdf/renderer`) using the same engine-derived data.
+- PDF generation is implemented via `AssessmentReportPDF` (`@react-pdf/renderer`) using the same engine-derived data (not DOM screenshot export).
 - Export-specific layout/styling may diverge from browser layout for readability and capture stability.
 - Preserve stakeholder-facing hierarchy: purpose/methodology, interpretation, summaries, action planning.
-- Keep visuals restrained and professional; prioritize scanability over dense UI patterns.
+- Metadata toolbars (IDs, dates, quick actions) should not repeat the same meta blocks inside the report body unnecessarily.
 
 ## Editing Guidance
 
 - Reuse existing report primitives (`ReportSection`, summary/action cards, interpretation blocks).
-- Minimize duplication between cover metadata and body sections.
+- Minimize duplication between toolbar/header metadata and body sections.
 - Maintain print-safe spacing, typography, and page-break behavior.
 - For cross-layer boundaries (derived-state persistence, static config rules), defer to `architecture.mdc`.

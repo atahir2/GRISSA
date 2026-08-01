@@ -11,3 +11,8 @@ out/
 # Debug / OS
 npm-debug.log*
 .DS_Store
+supabase-audit.txt
+
+.env.local
+.env.production
+dump/

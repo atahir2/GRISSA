@@ -1,19 +1,25 @@
 ---
-description: Persistence boundaries and safe Supabase update practices
+description: Legacy Supabase persistence boundaries and safe update practices
 globs: "{src/lib/supabase/**/*.ts,src/lib/saq/assessment.repository.ts,supabase/migrations/**/*.sql}"
 alwaysApply: false
 ---
 
-# Supabase Persistence Rules
+# Supabase Persistence Rules (legacy path)
 
-Applies to `src/lib/supabase/`, `src/lib/saq/assessment.repository.ts`, and migrations.
+Use when **`SAQ_DATABASE_PROVIDER=supabase`** or when editing Supabase clients/migrations. For the **Postgres/Drizzle** path, see **`postgres-persistence.mdc`**.
+
+Applies to `src/lib/supabase/`, Supabase-oriented repository code paths, and `supabase/migrations/`.
 
 ## Persisted Runtime State
 
-- `assessments`
+- `profiles` (per auth user; optional display fields)
+- `assessments` (includes `owner_user_id`)
+- `assessment_collaborators` (per-assessment access: `user_id`, `role`, `invited_by`; owner represented here as well)
 - `assessment_scope_selections`
 - `assessment_answers`
 - `assessment_action_items` (metadata fields such as effort/leader/deadline/status/remarks)
+
+RLS may use `SECURITY DEFINER` SQL helpers for membership checks (e.g. to avoid recursion on `assessment_collaborators`). See migrations and `docs/SAQ_SUPABASE_SETUP.md`.
 
 ## Not Persisted
 

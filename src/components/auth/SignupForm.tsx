@@ -3,33 +3,34 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/src/lib/supabase/client";
+import { useSession } from "next-auth/react";
+import { formatAuthErrorMessage } from "@/src/lib/auth/auth-errors";
+import { appFetch } from "@/src/lib/base-path";
 
 export function SignupForm() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.replace("/saq");
-      }
-    });
-  }, [router]);
+    if (session) router.replace("/saq");
+  }, [router, session]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setInfo(null);
     if (password !== confirm) {
       setError("Passwords do not match.");
+      return;
+    }
+    if (!fullName.trim()) {
+      setError("Full name is required.");
       return;
     }
     if (password.length < 6) {
@@ -38,28 +39,40 @@ export function SignupForm() {
     }
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim() || undefined,
-          },
-        },
+      const registerRes = await appFetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          fullName: fullName.trim() || undefined,
+        }),
       });
-      if (signUpError) {
-        setError(signUpError.message);
+      const text = await registerRes.text();
+      let registerJson: { error?: string };
+      try {
+        registerJson = text ? (JSON.parse(text) as { error?: string }) : {};
+      } catch {
+        setError(
+          registerRes.ok
+            ? "Unexpected response from server."
+            : `Registration failed (HTTP ${registerRes.status}). Check that the deployment URL includes the app path (basePath) if you use one.`,
+        );
         return;
       }
-      if (data.session) {
-        router.push("/saq");
-        router.refresh();
+      if (!registerRes.ok) {
+        setError(formatAuthErrorMessage(registerJson.error ?? "Failed to create account."));
         return;
       }
-      setInfo(
-        "If email confirmation is enabled, check your inbox to verify your account, then sign in."
-      );
+
+      const createdEmail = email.trim();
+      setRegisteredEmail(createdEmail);
+      setFullName("");
+      setEmail("");
+      setPassword("");
+      setConfirm("");
+    } catch {
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -75,7 +88,7 @@ export function SignupForm() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label htmlFor="signup-name" className="block text-sm font-medium text-slate-700">
-              Full name <span className="font-normal text-slate-500">(optional)</span>
+              Full name
             </label>
             <input
               id="signup-name"
@@ -83,6 +96,7 @@ export function SignupForm() {
               autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              required
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </div>
@@ -134,11 +148,6 @@ export function SignupForm() {
               {error}
             </p>
           )}
-          {info && (
-            <p className="text-sm text-emerald-800" role="status">
-              {info}
-            </p>
-          )}
           <button
             type="submit"
             disabled={loading}
@@ -159,6 +168,39 @@ export function SignupForm() {
           </Link>
         </p>
       </div>
+
+      {registeredEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-xl border border-emerald-200 bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-900">Registration successful</h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Your account for <strong>{registeredEmail}</strong> has been created. You can now log
+              in using your credentials.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link
+                href={`/login?registered=1`}
+                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              >
+                Go to login page
+              </Link>
+              <Link
+                href="/saq"
+                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Go to home page
+              </Link>
+              <button
+                type="button"
+                onClick={() => setRegisteredEmail(null)}
+                className="ml-auto text-sm text-slate-500 hover:text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

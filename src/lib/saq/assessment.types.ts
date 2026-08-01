@@ -8,12 +8,46 @@
 
 export type CapabilityScore = 1 | 2 | 3;
 
+import type { AssessmentRole, AssessmentVersionStatus } from "@/src/lib/saq/permissions";
+
 export interface Assessment {
   id: string;
   organisationName: string;
   /** ISO date string or Date for transport; use Date in app when needed. */
   createdAt: Date | string;
   updatedAt?: Date | string;
+}
+
+/** Listing on /saq: owned and shared assessments with the current user’s role. */
+export interface AssessmentListItem extends Assessment {
+  myRole: AssessmentRole;
+  ownerUserId: string;
+}
+
+export interface AssessmentAccess {
+  assessment: Assessment;
+  myRole: AssessmentRole;
+  ownerUserId: string;
+}
+
+export interface AssessmentVersion {
+  id: string;
+  assessmentId: string;
+  versionNumber: number;
+  label: string | null;
+  status: AssessmentVersionStatus;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AssessmentCollaborator {
+  id: string;
+  userId: string;
+  email: string;
+  role: AssessmentRole;
+  invitedBy: string | null;
+  createdAt: Date;
 }
 
 export interface ScopeSelection {

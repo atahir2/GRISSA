@@ -117,43 +117,6 @@ function buildActionItem(
 }
 
 /**
- * Sort action items by:
- * - Improvement priority: High → Medium → Low
- * - Within each priority: Immediate → Urgent → Planned → Low Priority → No Action Needed → (undefined)
- */
-function sortActionItems(actionItems: ActionItem[]): ActionItem[] {
-  const priorityOrder: Record<ImprovementPriority, number> = {
-    High: 0,
-    Medium: 1,
-    Low: 2,
-  };
-
-  const implOrder: Record<ImplementationPriority, number> = {
-    Immediate: 0,
-    Urgent: 1,
-    Planned: 2,
-    "Low Priority": 3,
-    "No Action Needed": 4,
-  };
-
-  return [...actionItems].sort((a, b) => {
-    const pa = priorityOrder[a.improvementPriority];
-    const pb = priorityOrder[b.improvementPriority];
-    if (pa !== pb) return pa - pb;
-
-    const ia =
-      a.implementationPriority !== undefined
-        ? implOrder[a.implementationPriority]
-        : Number.POSITIVE_INFINITY;
-    const ib =
-      b.implementationPriority !== undefined
-        ? implOrder[b.implementationPriority]
-        : Number.POSITIVE_INFINITY;
-    return ia - ib;
-  });
-}
-
-/**
  * Build a summary for a list of action items.
  */
 function buildActionPlanSummary(actionItems: ActionItem[]): ActionPlanSummary {
@@ -228,6 +191,10 @@ function buildActionPlanSummary(actionItems: ActionItem[]): ActionPlanSummary {
  *   effortRequired exist.
  * - leader / deadline / status / remarks come from existingActionMetadata
  *   if provided.
+ *
+ * Display order follows assessment results traversal (theme → scope → question)
+ * so items do not jump when Effort Required is selected (implementation tiers are
+ * for labels/summary counts only).
  */
 export function buildActionPlan(
   results: AssessmentResults,
@@ -256,11 +223,10 @@ export function buildActionPlan(
     rawActionItems.push(buildActionItem(qr, effort, metadata));
   }
 
-  const sortedActionItems = sortActionItems(rawActionItems);
-  const summary = buildActionPlanSummary(sortedActionItems);
+  const summary = buildActionPlanSummary(rawActionItems);
 
   return {
-    actionItems: sortedActionItems,
+    actionItems: rawActionItems,
     summary,
   };
 }

@@ -31,7 +31,6 @@ export function ReportThemeCard({
   summary,
   className = "",
 }: ReportThemeCardProps) {
-  const totalQuestions = summary.totalQuestions || 1;
   const completionPct = Math.round(summary.completionRate);
   const readiness = computeThemeReadiness(summary);
   const readinessChip =

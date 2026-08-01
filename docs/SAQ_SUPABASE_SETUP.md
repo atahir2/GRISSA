@@ -2,7 +2,9 @@
 
 The Sustainability Self-Assessment (SAQ) tool persists runtime data in Supabase:
 
+- **profiles** — one row per auth user (id, optional names)
 - **assessments** — one row per assessment (id, organisation name, owner user, timestamps)
+- **assessment_collaborators** — per-assessment access (user_id, role, invited_by); unique (assessment_id, user_id)
 - **assessment_scope_selections** — per-assessment scope and target capability (assessment_id, scope_id, in_scope, target_capability)
 - **assessment_answers** — per-assessment question answers (assessment_id, question_id, selected_score)
 - **assessment_action_items** — action metadata only (effort_required, leader, deadline, status, remarks); priorities are derived by the engine
@@ -35,10 +37,14 @@ Apply the SAQ schema in one of these ways.
 1. In your project, open **SQL Editor**.
 2. Run migrations **in order** (each file once, or use `db push` with the CLI):
    - `supabase/migrations/20250310000000_create_saq_runtime_tables.sql`
-   - `supabase/migrations/20250310100000_saq_rls_policies.sql` (anon policies; superseded by the next file when you enable auth)
+   - `supabase/migrations/20250310100000_saq_rls_policies.sql` (anon policies; superseded when auth is enabled)
    - `supabase/migrations/20250401120000_auth_profiles_owner_rls.sql` (profiles, `owner_user_id`, user-scoped RLS)
+   - `supabase/migrations/20250402120000_assessment_collaborators.sql` (collaboration table, shared-access RLS, helper RPCs)
+   - `supabase/migrations/20250403130000_fix_rls_recursion_collaborators.sql` (non-recursive RLS via `SECURITY DEFINER` helpers; apply if you see collaborator policy recursion)
 
 **Phase 1 auth:** After the auth migration, enable **Email** under **Authentication → Providers** in the Supabase dashboard so users can sign up and sign in with email/password.
+
+**App env:** Set `NEXT_PUBLIC_SITE_URL` to your deployed origin (no trailing slash) so email confirmation redirects match production; add the same origin and `/auth/callback` under **Authentication → URL Configuration → Redirect URLs**.
 
 ### Option B: Supabase CLI (linked project)
 
@@ -61,6 +67,7 @@ npx supabase db push
 2. Edit `.env.local` and set:
    - `NEXT_PUBLIC_SUPABASE_URL` — your project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — your anon public key
+   - `NEXT_PUBLIC_SITE_URL` — optional but recommended for production (public app URL, no trailing slash)
 
 Restart the Next.js dev server after changing env vars.
 
@@ -81,6 +88,7 @@ Restart the Next.js dev server after changing env vars.
 |------------------------------|-------------------------------------------------------------------------|
 | `profiles`                   | One row per auth user (id, optional full_name, organisation_name, timestamps). |
 | `assessments`                | One row per assessment run (id, organisation_name, owner_user_id, created_at, updated_at). |
+| `assessment_collaborators`   | Per-user access to an assessment (role: owner/editor/reviewer/viewer); UNIQUE(assessment_id, user_id). |
 | `assessment_scope_selections`| One row per scope item per assessment; UNIQUE(assessment_id, scope_id). |
 | `assessment_answers`         | One row per question per assessment; UNIQUE(assessment_id, question_id). |
 | `assessment_action_items`    | Action metadata per question per assessment; UNIQUE(assessment_id, question_id). |
@@ -91,12 +99,14 @@ All child tables use `ON DELETE CASCADE` so deleting an assessment removes its s
 
 ## Row Level Security (RLS) and authentication
 
-The Phase 1 migration `20250401120000_auth_profiles_owner_rls.sql` enables RLS on `profiles` and replaces open anon policies on SAQ tables with **authenticated** policies:
+**Phase 1** (`20250401120000_auth_profiles_owner_rls.sql`): RLS on `profiles`; authenticated-only access to SAQ tables with **owner-only** rules on assessments and child rows.
 
-- Users may only read/update their own **profile** row (`profiles.id = auth.uid()`).
-- Users may only access **assessments** they own (`assessments.owner_user_id = auth.uid()`).
-- **Scope selections**, **answers**, and **action items** are allowed only when the parent assessment is owned by the current user.
+**Phase 2** (`20250402120000_assessment_collaborators.sql` + fix `20250403130000_fix_rls_recursion_collaborators.sql`):
 
-The app uses the **anon** key in the browser and server; authenticated requests send the user JWT so these policies apply. Unauthenticated clients cannot read or write SAQ runtime data after this migration.
+- **Collaborators:** Users may read assessments shared via `assessment_collaborators`; **edit** operations require owner or editor (via `rls_user_can_edit_assessment` and matching policies).
+- **Profiles:** Users may still read/update only their own profile.
+- **Recursion fix:** Policies must not nest `SELECT` on `assessment_collaborators` inside other `assessment_collaborators` RLS; use the bundled `SECURITY DEFINER` helpers (`rls_user_has_assessment_access`, `rls_user_can_edit_assessment`).
 
-**Note:** Applying `20250401120000_auth_profiles_owner_rls.sql` deletes any existing `assessments` rows that have no `owner_user_id` (legacy data from before ownership). New assessments always set `owner_user_id` from the signed-in user.
+The app uses the **anon** key with the user JWT; unauthenticated clients cannot access SAQ runtime data.
+
+**Note:** Phase 1 migration deletes legacy `assessments` rows that have no `owner_user_id`. New assessments set `owner_user_id` from the signed-in user and insert an owner row in `assessment_collaborators`.

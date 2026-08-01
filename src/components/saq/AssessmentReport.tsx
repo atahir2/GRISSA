@@ -7,17 +7,21 @@ import { buildAssessmentResults } from "@/src/lib/saq/engine/results";
 import { buildActionPlan, type ExistingActionMetadata } from "@/src/lib/saq/engine/actions";
 import { buildAssessmentInterpretation } from "@/src/lib/saq/engine/interpretation";
 import {
-  getAssessmentById,
+  getAssessmentAccess,
   loadScopeSelections,
   loadAnswers,
   loadActionMetadata,
 } from "@/src/lib/saq/assessment.repository";
+import type { AssessmentRole } from "@/src/lib/saq/permissions";
+import { useAssessmentVersionRoute } from "./useAssessmentVersionRoute";
 import type { ScopeSelection, AssessmentAnswer } from "@/src/lib/saq/engine/results";
 import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
-import { ReportHeader } from "./ReportHeader";
+import { ReportMetaList, GRISSA_REPORT_PAGE_DESCRIPTION } from "./ReportHeader";
+import { GrissaPageHeader, GrissaPageTitleStrip } from "./GrissaPageHeader";
 import { ReportSection } from "./ReportSection";
 import { ReportSummaryCard } from "./ReportSummaryCard";
 import { ReportThemeCard } from "./ReportThemeCard";
+import { ReportInfoBanner } from "./ReportInfoBanner";
 import { ReportPurposeNote } from "./ReportPurposeNote";
 import { MethodologyNote } from "./MethodologyNote";
 import { ReportReadinessMeaning } from "./ReportReadinessMeaning";
@@ -35,10 +39,19 @@ interface AssessmentReportProps {
 
 export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
   const reportRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    versions,
+    versionsLoading,
+    versionError,
+    effectiveVersionId,
+    currentVersion,
+  } = useAssessmentVersionRoute(assessmentId);
+
+  const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<AssessmentRole | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [isExportMode, setIsExportMode] = useState(false);
+  const [isExportMode] = useState(false);
   const [assessmentName, setAssessmentName] = useState<string | null>(null);
   const [createdAt, setCreatedAt] = useState<Date | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -55,19 +68,22 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
   const { scopeItems, themes } = questionnaire;
 
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (!effectiveVersionId || versionsLoading) return;
+    setDataLoading(true);
     setError(null);
     try {
-      const [assessment, scope, ans, meta] = await Promise.all([
-        getAssessmentById(assessmentId),
-        loadScopeSelections(assessmentId),
-        loadAnswers(assessmentId),
-        loadActionMetadata(assessmentId),
-      ]);
-      if (!assessment) {
+      const access = await getAssessmentAccess(assessmentId);
+      if (!access) {
         setError("Assessment not found.");
         return;
       }
+      setMyRole(access.myRole);
+      const assessment = access.assessment;
+      const [scope, ans, meta] = await Promise.all([
+        loadScopeSelections(assessmentId, effectiveVersionId),
+        loadAnswers(assessmentId, effectiveVersionId),
+        loadActionMetadata(assessmentId, effectiveVersionId),
+      ]);
       setAssessmentName(assessment.organisationName);
       setCreatedAt(
         assessment.createdAt instanceof Date
@@ -111,13 +127,19 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
         e instanceof Error ? e.message : "Failed to load assessment."
       );
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
-  }, [assessmentId, scopeItems]);
+  }, [assessmentId, scopeItems, effectiveVersionId, versionsLoading]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const combinedError = versionError || error;
+  const loading =
+    versionsLoading ||
+    dataLoading ||
+    (!!assessmentId && !effectiveVersionId && !versionError);
 
   const assessmentResults = useMemo(
     () => buildAssessmentResults(scopeSelections, answers),
@@ -193,7 +215,7 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `SAQ-Report-${(assessmentName ?? "report").replace(/[^a-zA-Z0-9-_]/g, "_") || "report"}.pdf`;
+      a.download = `GRISSA-Report-${(assessmentName ?? "report").replace(/[^a-zA-Z0-9-_]/g, "_") || "report"}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {
@@ -224,31 +246,34 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
       grouped.set(themeId, arr);
     }
     return grouped;
-  }, [actionPlan.actionItems]);
+  }, [actionPlan]);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-          <p className="text-slate-600">Loading report…</p>
-          <div className="mx-auto mt-4 h-1 w-32 animate-pulse rounded bg-slate-200" />
+      <main className="min-h-0 flex-1 bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+          <p className="text-slate-400">Loading report…</p>
+          <div className="mx-auto mt-4 h-1 w-32 animate-pulse rounded bg-slate-600" />
         </div>
       </main>
     );
   }
 
-  if (error) {
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString(undefined, { dateStyle: "medium" });
+
+  if (combinedError) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-2xl px-4 py-16">
+      <main className="min-h-0 flex-1 bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-16">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            {error}
+            {combinedError}
           </div>
           <Link
-            href="/saq"
+            href="/saq/manage"
             className="mt-4 inline-block text-sm font-medium text-emerald-600 hover:underline"
           >
-            Back to SAQ
+            Back to assessments
           </Link>
         </div>
       </main>
@@ -256,51 +281,133 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-12 print:bg-white print:pb-0">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 print:max-w-none print:px-4 print:py-4">
-        {/* Screen-only actions */}
-        <div className="mb-6 flex flex-wrap items-center gap-2 print:hidden">
-          <Link
-            href={`/saq/assessment/${assessmentId}`}
-            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-          >
-            Resume assessment
-          </Link>
-          <Link
-            href={`/saq/dashboard/${assessmentId}`}
-            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-          >
-            View dashboard
-          </Link>
-          <button
-            type="button"
-            onClick={handleExportPdf}
-            disabled={exporting}
-            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {exporting ? "Exporting…" : "Export PDF"}
-          </button>
-          <Link
-            href="/saq"
-            className="ml-auto text-sm text-slate-600 hover:underline"
-          >
-            Back to SAQ
-          </Link>
+    <main className="min-h-0 flex-1 bg-transparent pb-12 print:bg-white print:pb-0">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 print:max-w-none print:px-4 print:py-4">
+        <GrissaPageHeader
+          className="print:hidden"
+          title="GRISSA Report"
+          description={GRISSA_REPORT_PAGE_DESCRIPTION}
+        />
+
+        <div className="mb-4 print:hidden">
+          <ReportInfoBanner />
         </div>
 
-        {/* Report content (captured for PDF). In export mode, header is omitted so page 2 starts with report body. */}
+        {/* Match Dashboard layout: stacked left meta, dates centre, actions right (screen only). */}
+        <header className="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:hidden">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+            <dl className="flex min-w-0 flex-col gap-2 text-xs text-slate-600 lg:max-w-[40%]">
+              <div>
+                <dt className="inline font-medium text-slate-500">Assessment ID:</dt>
+                <dd className="inline font-mono text-slate-900"> {assessmentId}</dd>
+              </div>
+              <div>
+                <dt className="inline font-medium text-slate-500">Organisation:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {assessmentName ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="inline font-medium text-slate-500">Version:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {currentVersion
+                    ? `v${currentVersion.versionNumber} (${currentVersion.status})`
+                    : "—"}
+                </dd>
+              </div>
+            </dl>
+
+            <dl className="flex min-w-[10rem] flex-col gap-2 text-xs text-slate-600 lg:flex-1 lg:items-start lg:self-stretch xl:mx-auto xl:max-w-sm">
+              <div>
+                <dt className="inline font-medium text-slate-500">Created:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {createdAt ? formatDate(createdAt) : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="inline font-medium text-slate-500">Updated:</dt>
+                <dd className="inline text-slate-900">
+                  {" "}
+                  {updatedAt ? formatDate(updatedAt) : "—"}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="flex shrink-0 flex-col gap-2 lg:items-end">
+              <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Quick actions
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={
+                    effectiveVersionId
+                      ? `/saq/assessment/${assessmentId}?versionId=${effectiveVersionId}`
+                      : `/saq/assessment/${assessmentId}`
+                  }
+                  className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  Resume assessment
+                </Link>
+                <Link
+                  href={
+                    effectiveVersionId
+                      ? `/saq/dashboard/${assessmentId}?versionId=${effectiveVersionId}`
+                      : `/saq/dashboard/${assessmentId}`
+                  }
+                  className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  View dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleExportPdf}
+                  disabled={exporting}
+                  className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60"
+                >
+                  {exporting ? "Exporting…" : "Export PDF"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {myRole && effectiveVersionId && versions.length > 1 && (
+          <div className="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm print:hidden">
+            Currently Viewing Version:{" "}
+            <span className="font-medium text-slate-900">
+              {currentVersion ? `v${currentVersion.versionNumber}` : "unknown"}
+            </span>
+            . Manage versions from Workspace.
+          </div>
+        )}
+
+        {/* Report body card: title sits above this on screen (matches Dashboard/Assessment). */}
         <div
           ref={reportRef}
           className={`saq-report-root rounded-lg border border-slate-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none print:p-0 ${isExportMode ? "saq-export-mode" : ""}`}
         >
           {!isExportMode && (
-            <ReportHeader
-              organisationName={assessmentName ?? ""}
-              assessmentId={assessmentId}
-              createdAt={createdAt}
-              updatedAt={updatedAt}
-              exportMode={isExportMode}
-            />
+            <>
+              {/* Browser print: outer chrome is hidden; title + assessment meta live here only when printing. */}
+              <div className="hidden print:mb-6 print:block print:border-b print:border-slate-300 print:pb-6">
+                <GrissaPageTitleStrip
+                  descriptionTone="onLight"
+                  title="GRISSA Report"
+                  description={GRISSA_REPORT_PAGE_DESCRIPTION}
+                  className="[&_h1]:print:text-xl [&_p]:print:text-xs [&_span]:print:bg-none [&_span]:print:bg-clip-border [&_span]:print:text-emerald-800"
+                />
+                <ReportMetaList
+                  organisationName={assessmentName ?? "—"}
+                  assessmentId={assessmentId}
+                  createdAt={createdAt}
+                  updatedAt={updatedAt}
+                  className="mt-4 print:mt-3"
+                />
+              </div>
+            </>
           )}
 
           <ReportPurposeNote />

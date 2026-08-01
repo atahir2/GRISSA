@@ -1,61 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Session } from "@supabase/supabase-js";
-import { createClient } from "@/src/lib/supabase/client";
 import { listAssessments } from "@/src/lib/saq/assessment.repository";
 import { createAssessmentAction } from "@/src/lib/saq/createAssessmentAction";
-import type { Assessment } from "@/src/lib/saq/assessment.types";
-import { WelcomeHero } from "./WelcomeHero";
-import { HowItWorksCard } from "./HowItWorksCard";
+import type { AssessmentListItem } from "@/src/lib/saq/assessment.types";
 import { AssessmentListCard } from "./AssessmentListCard";
 import { EmptyAssessmentsState } from "./EmptyAssessmentsState";
-
-function displayName(session: Session): string {
-  const meta = session.user.user_metadata as { full_name?: string } | undefined;
-  const fromMeta = meta?.full_name?.trim();
-  if (fromMeta) return fromMeta;
-  return session.user.email ?? "Signed in";
-}
+import { canCreateAssessmentVersion, canManageCollaborators } from "@/src/lib/saq/permissions";
+import { GrissaPageHeader } from "./GrissaPageHeader";
 
 export function SaqLanding() {
   const router = useRouter();
-  const [session, setSession] = useState<Session | null>(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [orgName, setOrgName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setAuthReady(true);
-    });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!authReady) return;
-    if (!session) {
-      setAssessments([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+  const loadAssessments = useCallback(() => {
     let cancelled = false;
     setLoading(true);
+    setError(null);
     listAssessments()
       .then((list) => {
         if (!cancelled) setAssessments(list);
@@ -69,18 +36,9 @@ export function SaqLanding() {
     return () => {
       cancelled = true;
     };
-  }, [authReady, session]);
+  }, []);
 
-  async function handleLogout() {
-    setSigningOut(true);
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      router.refresh();
-    } finally {
-      setSigningOut(false);
-    }
-  }
+  useEffect(() => loadAssessments(), [loadAssessments]);
 
   async function handleNewAssessment(e: React.FormEvent) {
     e.preventDefault();
@@ -100,117 +58,14 @@ export function SaqLanding() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <p className="text-sm text-slate-600">
-            {!authReady ? (
-              <span className="text-slate-500">Checking session…</span>
-            ) : session ? (
-              <span>
-                Signed in as{" "}
-                <span className="font-medium text-slate-900">{displayName(session)}</span>
-              </span>
-            ) : (
-              <span className="text-slate-700">Sign in to create and manage assessments.</span>
-            )}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            {!authReady ? null : session ? (
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                disabled={signingOut}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
-              >
-                {signingOut ? "Signing out…" : "Log out"}
-              </button>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+    <main className="min-h-0 flex-1 bg-transparent pb-12">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <GrissaPageHeader
+          title="GRISSA Workspace"
+          description="Create, resume, review, and manage assessment runs across your organisation."
+        />
 
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <WelcomeHero />
-
-        <section className="mt-12" aria-labelledby="how-it-works-heading">
-          <h2 id="how-it-works-heading" className="text-xl font-semibold text-slate-900">
-            How it works
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Four steps from scope to report, save progress anytime, and return later.
-          </p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <HowItWorksCard
-              step={1}
-              title="Define scope and goals"
-              description="Choose which topic areas are in scope and set optional target capability levels."
-            />
-            <HowItWorksCard
-              step={2}
-              title="Answer the assessment"
-              description="Rate your current capability (1–3) for each in-scope question."
-            />
-            <HowItWorksCard
-              step={3}
-              title="Review dashboard and results"
-              description="See completion, pass levels, targets met, and priority summaries."
-            />
-            <HowItWorksCard
-              step={4}
-              title="Generate action plan and report"
-              description="Get a prioritised action plan and export a PDF report for stakeholders."
-            />
-          </div>
-        </section>
-
-        {!authReady ? (
-          <section className="mt-12 rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <p className="text-sm text-slate-500">Loading…</p>
-          </section>
-        ) : !session ? (
-          <section
-            className="mt-12 rounded-xl border border-emerald-200 bg-emerald-50/80 p-8 shadow-sm"
-            aria-labelledby="sign-in-heading"
-          >
-            <h2 id="sign-in-heading" className="text-xl font-semibold text-slate-900">
-              Sign in to use the SAQ
-            </h2>
-            <p className="mt-2 text-sm text-slate-700">
-              Create an account or log in to start an assessment, save your answers, and access your dashboard and reports.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-              >
-                Create an account
-              </Link>
-            </div>
-          </section>
-        ) : (
-          <>
+        <>
             <section className="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="new-assessment-heading">
               <h2 id="new-assessment-heading" className="text-xl font-semibold text-slate-900">
                 Start a new assessment
@@ -266,6 +121,13 @@ export function SaqLanding() {
                   </span>
                 )}
               </div>
+              <p className="mt-2 text-xs text-slate-500">
+                Owners can manage team access, create versions, and delete assessments. Editors can update draft
+                versions. Reviewers/viewers remain read-only.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Last updated by is shown when reliably available; otherwise marked as not tracked yet.
+              </p>
               {loading ? (
                 <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50/50 p-8 text-center">
                   <p className="text-sm text-slate-500">Loading assessments…</p>
@@ -282,13 +144,20 @@ export function SaqLanding() {
               ) : (
                 <ul className="mt-6 space-y-4" role="list">
                   {assessments.map((a) => (
-                    <AssessmentListCard key={a.id} assessment={a} />
+                    <AssessmentListCard
+                      key={a.id}
+                      assessment={a}
+                      canManageTeam={canManageCollaborators(a.myRole)}
+                      canCreateVersion={canCreateAssessmentVersion(a.myRole)}
+                      onDeleted={() => {
+                        void loadAssessments();
+                      }}
+                    />
                   ))}
                 </ul>
               )}
             </section>
-          </>
-        )}
+        </>
       </div>
     </main>
   );

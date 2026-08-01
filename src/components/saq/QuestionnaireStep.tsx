@@ -19,6 +19,7 @@ interface QuestionnaireStepProps {
   scopeSelections: ScopeSelection[];
   answers: AssessmentAnswer[];
   onChange: (answers: AssessmentAnswer[]) => void;
+  readOnly?: boolean;
 }
 
 export function QuestionnaireStep({
@@ -28,6 +29,7 @@ export function QuestionnaireStep({
   scopeSelections,
   answers,
   onChange,
+  readOnly = false,
 }: QuestionnaireStepProps) {
   const inScopeScopeIds = new Set(
     scopeSelections.filter((s) => s.inScope).map((s) => s.scopeId)
@@ -48,7 +50,12 @@ export function QuestionnaireStep({
   const getAnswer = (questionId: string): AssessmentAnswer | undefined =>
     answers.find((a) => a.questionId === questionId);
 
-  const upsertAnswer = (questionId: string, score: CapabilityScore) => {
+  const upsertAnswer = (questionId: string, score: CapabilityScore | undefined) => {
+    if (readOnly) return;
+    if (score === undefined) {
+      onChange(answers.filter((a) => a.questionId !== questionId));
+      return;
+    }
     const existing = getAnswer(questionId);
     const base: AssessmentAnswer =
       existing ?? {
@@ -99,10 +106,16 @@ export function QuestionnaireStep({
 
   return (
     <div className="space-y-8">
+      {readOnly && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          You have <strong>view-only</strong> access. Answers are shown for review but cannot be changed.
+        </div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader
           title="Questionnaire"
-          subtitle="Answer each in-scope question with a capability level (1–3). Level 1 = initial; 3 = mature."
+          subtitle="Answer each in-scope question with the current capability level (1–3). 
+          Level 1 = initial; 2 = developing; 3 = established."
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <SummaryCard
@@ -188,13 +201,15 @@ export function QuestionnaireStep({
                                     </p>
                                   )}
                                 </div>
-                                <div className="shrink-0 lg:pl-4">
+                                <div className="w-full shrink-0 lg:w-80 lg:max-w-md lg:pl-4">
                                   <CapabilitySelector
+                                    answerOptions={q.answerOptions}
                                     value={ans?.selectedScore}
                                     onChange={(score) =>
                                       upsertAnswer(q.id, score)
                                     }
                                     showNotAnswered={true}
+                                    disabled={readOnly}
                                   />
                                 </div>
                               </div>
