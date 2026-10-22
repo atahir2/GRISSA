@@ -60,7 +60,6 @@ Typical use cases: internal benchmarking, improvement planning, sustainability r
 | App | Next.js 14 (App Router), React, Tailwind CSS |
 | Auth | NextAuth (credentials) + JWT sessions |
 | Runtime DB (recommended) | PostgreSQL + Drizzle ORM |
-| Optional legacy DB | Supabase client path when `SAQ_DATABASE_PROVIDER=supabase` |
 | Questionnaire | Static JSON (`questionnaire.data.json`) — not stored in the DB |
 | PDF | `@react-pdf/renderer` (`AssessmentReportPDF`) |
 | Deploy | Optional Docker Compose — [docs/DOCKER.md](docs/DOCKER.md) |
