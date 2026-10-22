@@ -4,6 +4,8 @@ Quick reference for the **Sustainability Self-Assessment (SAQ) / GRISSA** tool. 
 
 Related docs:
 
+- `README.md` — user/partner-facing product guide
+- `docs/DEVELOPER.md` — run/deploy/extend for developers & operators
 - `docs/SAQ_ARCHITECTURE.md` — layers, data flow, folder map
 - `docs/SAQ_DEVELOPMENT_WORKFLOW.md` — where to implement changes; memory-layer habits
 - `docs/DOCKER.md` — Compose (Postgres + Next.js + Adminer) and migrations

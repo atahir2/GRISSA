@@ -31,16 +31,15 @@ How to extend the SAQ safely while preserving architectural boundaries. Layer de
 ### Persistence and data access
 
 - **Client facade:** `src/lib/saq/assessment.repository.ts` → `POST /api/saq/repository`.
-- **Selector:** `SAQ_DATABASE_PROVIDER` → `repositories/assessment.repository.{postgres|supabase}.ts` (unset defaults to `supabase`; prefer `postgres` for new work).
+- **Selector:** `SAQ_DATABASE_PROVIDER` → `repositories/assessment.repository.postgres.ts`
 - **PostgreSQL:** `src/lib/db/drizzle.ts`, `drizzle/schema.ts`, `drizzle/migrations/` — `npm run db:migrate` or Compose `migrate` profile (`docs/DOCKER.md`). Do not run migrations inside the production `app` image.
-- **Supabase (legacy):** `src/lib/supabase/`, `supabase/migrations/` — `docs/SAQ_SUPABASE_SETUP.md`.
 - Map DB rows to domain types in repositories; keep UI/engine unaware of row shape.
 
 ### Access control (auth and collaboration)
 
 - Extend `src/lib/saq/permissions.ts` (roles, version status, edit/create-version/delete/export helpers).
 - Enforce in the active repository implementation and API route.
-- Routes: `src/middleware.ts` for protected SAQ workflow paths; primary login NextAuth (`/login`, `/signup`); legacy `/auth/callback` only for Supabase code exchange when applicable.
+- Routes: `src/middleware.ts` for protected SAQ workflow paths; primary login NextAuth (`/login`, `/signup`).
 - UI: permission helpers + `readOnly` props — do not scatter role string checks.
 
 ### Base path and deploy URLs
@@ -74,5 +73,4 @@ Prefer linking between docs/rules rather than copying long blocks.
 1. Update the relevant `.cursor/rules/*.mdc` first (behavioral guidance).
 2. Update the matching `docs/` file for narrative/onboarding.
 3. Keep `docs/SAQ_PROJECT_CONTEXT.md` as the broad quick-reference anchor.
-4. Touch `docs/SAQ_SUPABASE_SETUP.md` only when legacy Supabase setup/schema procedures change.
-5. Touch `docs/DOCKER.md` when Compose, env, or deploy procedures change.
+4. Touch `docs/DOCKER.md` when Compose, env, or deploy procedures change.
