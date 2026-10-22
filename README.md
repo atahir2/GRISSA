@@ -1,144 +1,165 @@
-# gRISC Self-Assessment Toolkit
+# GRISSA — Green Research Infrastructure Sustainability Self Assessment
 
-Green Research Infrastructure Sustainable Certification Self Assessment (gRISC-SA) is a web-based toolkit for assessing the sustainability maturity of research infrastructures, digital infrastructures, and data centres for a greener certification readiness profile. The system enables structured self-assessment, generates actionable improvement plans, and produces professional reports to support sustainability planning and certification readiness.
+**GRISSA** (also referred to as **SAQ**) is a web-based sustainability self-assessment tool for research infrastructures, datacenters, digital infrastructures, and organisations. It is developed in the context of **GreenDIGIT** and produces a capability/readiness **baseline**, priority gaps, action plans, dashboard views, and PDF reports for planning and standards-alignment discussion.
 
----
-
-## Overview
-
-The gRISC Self-Assessment toolkit is designed to transform static sustainability questionnaires into an interactive, data-driven platform.
-
-It allows organisations to:
-
-* evaluate sustainability practices across multiple themes
-* identify capability gaps and improvement priorities
-* generate structured action plans
-* interpret readiness levels
-* produce stakeholder-ready reports
-
-The tool supports internal decision-making as well as preparation for sustainability standards alignment and future certification frameworks.
+GRISSA is **not a certification system** and does not issue certification decisions. Outputs support preparation and internal planning (e.g. audits, directives, or organisational goals).
 
 ---
 
-## Key Features
+## Table of contents
 
-* **Structured Self-Assessment**
-
-  * Multi-theme questionnaire covering governance, energy, monitoring, circularity, water, and lifecycle
-
-* **Scoring & Interpretation Engine**
-
-  * Capability levels (Level 1–3)
-  * Gap analysis and readiness interpretation
-  * Priority classification (High / Medium / Low)
-
-* **Action Plan Generation**
-
-  * Automatically derived recommendations
-  * Implementation prioritisation (Immediate → Consolidate)
-  * Effort estimation
-
-* **Interactive Dashboard**
-
-  * Theme-wise performance overview
-  * Priority distribution
-  * Visual readiness indicators
-
-* **Professional Report Export**
-
-  * Structured PDF report
-  * Interpretation, summaries, and detailed action plans
-  * Suitable for stakeholder review and baseline discussions
+- [What it does](#what-it-does)
+- [Key features](#key-features)
+- [Tech stack](#tech-stack)
+- [Architecture (summary)](#architecture-summary)
+- [Repository layout](#repository-layout)
+- [Getting started (local)](#getting-started-local)
+- [Docker](#docker)
+- [npm scripts](#npm-scripts)
+- [User workflow and roles](#user-workflow-and-roles)
+- [Development guidelines](#development-guidelines)
+- [Documentation index](#documentation-index)
+- [Contact](#contact)
 
 ---
 
-## Tech Stack
+## What it does
 
-* **Frontend:** Next.js (App Router), React
-* **Styling:** Tailwind CSS
-* **Auth:** NextAuth (credentials) + JWT sessions
-* **Backend / DB:** PostgreSQL + Drizzle ORM (recommended); optional legacy Supabase path via `SAQ_DATABASE_PROVIDER`
-* **Data Model:** JSON questionnaire + versioned relational runtime state
-* **Export:** PDF via `@react-pdf/renderer` (engine-derived data)
-* **Deploy:** optional Docker Compose — [docs/DOCKER.md](docs/DOCKER.md)
+Organisations use GRISSA to:
 
----
+- Evaluate sustainability practices across multiple themes (e.g. governance, energy, monitoring, circularity, water, lifecycle)
+- Score capability levels (typically Level 1–3) and identify gaps against optional targets
+- Prioritise improvements (High / Medium / Low) and generate structured action plans
+- Review results on an interactive dashboard
+- Export a stakeholder-ready PDF report for baseline and standards-alignment discussion
 
-## Architecture Overview
-
-Modular layers (detail: [docs/SAQ_ARCHITECTURE.md](docs/SAQ_ARCHITECTURE.md)):
-
-1. **Static questionnaire** — JSON themes, scope, questions, answer options
-2. **Runtime assessment** — assessments, **versions**, collaborators, scope/answers/action metadata (`SAQ_DATABASE_PROVIDER=postgres` or legacy `supabase`)
-3. **SAQ engine** — `scoring`, `results`, `actions`, `interpretation`, `scope` under `src/lib/saq/engine/`
-4. **UI** — Home / Workspace / assessment flow / dashboard / report
-5. **Export** — `AssessmentReportPDF` from the same engine outputs
-
-UI talks to persistence through the repository facade → `POST /api/saq/repository`.
+Typical use cases: internal benchmarking, improvement planning, sustainability reporting support, and preparing a baseline for future certification or standards pathways — without treating the tool as a certifier.
 
 ---
 
-## Project Structure (Simplified)
+## Key features
+
+| Area | What you get |
+|------|----------------|
+| **Structured self-assessment** | Multi-theme questionnaire with scope selection and optional target levels |
+| **Scoring & interpretation** | Capability levels, gap analysis, priority classification, stakeholder-oriented interpretation |
+| **Action plans** | Engine-derived recommendations with implementation priority and effort estimates |
+| **Dashboard** | Theme performance, priorities, and readiness-oriented overview |
+| **PDF report** | Print-friendly export via `@react-pdf/renderer` from the same engine outputs |
+| **Auth** | Signup / login with **NextAuth** (credentials) and JWT sessions |
+| **Collaboration** | Share assessments with roles: owner, editor, reviewer, viewer |
+| **Versioned assessments** | Runtime state keyed by `version_id`; content edits only on **draft** versions (owner/editor) |
+| **Workspace navigation** | Main nav: **Home** (`/saq`) and **Workspace** (`/saq/manage`) |
+
+---
+
+## Tech stack
+
+| Area | Choice |
+|------|--------|
+| App | Next.js 14 (App Router), React, Tailwind CSS |
+| Auth | NextAuth (credentials) + JWT sessions |
+| Runtime DB (recommended) | PostgreSQL + Drizzle ORM |
+| Optional legacy DB | Supabase client path when `SAQ_DATABASE_PROVIDER=supabase` |
+| Questionnaire | Static JSON (`questionnaire.data.json`) — not stored in the DB |
+| PDF | `@react-pdf/renderer` (`AssessmentReportPDF`) |
+| Deploy | Optional Docker Compose — [docs/DOCKER.md](docs/DOCKER.md) |
+
+
+---
+
+## Architecture (summary)
+
+Detail: [docs/SAQ_ARCHITECTURE.md](docs/SAQ_ARCHITECTURE.md).
+
+| Layer | Role |
+|-------|------|
+| Static questionnaire | Themes, scope items, questions, answer options in JSON |
+| Runtime assessment | Assessments, **versions**, collaborators, scope/answers/action metadata (Postgres or Supabase) |
+| SAQ engine | Pure TypeScript: scoring, results, actions, interpretation, scope helpers |
+| Presentation | Home, Workspace, assessment steps, dashboard, report/PDF |
+| Access | NextAuth + `permissions.ts` + repository guards (RLS only on the Supabase path) |
+
+UI calls the repository facade → `POST /api/saq/repository`. Derived scores and summaries are recomputed in memory and are **not** persisted.
+
+```mermaid
+flowchart LR
+  UI[UI pages / components]
+  Facade[assessment.repository facade]
+  API["POST /api/saq/repository"]
+  Runtime[Postgres or Supabase runtime]
+  Engine[SAQ engine]
+  UI --> Facade --> API --> Runtime
+  UI --> Engine
+  Engine -.->|in-memory only| UI
+```
+
+---
+
+## Repository layout
 
 ```
 src/
   app/saq/           # Home, manage, assessment, dashboard, report
   app/api/           # NextAuth, register, saq/repository
-  components/saq/
-  lib/saq/           # engine, repositories, permissions, questionnaire JSON
+  components/saq/    # Feature UI (incl. AssessmentReportPDF)
+  components/auth/   # Login / signup
+  lib/saq/           # Engine, repositories, permissions, questionnaire JSON
   lib/auth/          # NextAuth options
   lib/db/            # Drizzle + pg
-  lib/supabase/      # legacy provider path
   middleware.ts      # NextAuth JWT gate
-drizzle/             # schema + migrations
-docs/
-.cursor/rules/
+drizzle/             # Schema + migrations
+docs/                # Human reference docs
+.cursor/rules/       # Cursor coding rules
 ```
 
 ---
 
-## Getting Started
+## Getting started (local)
 
 ### 1. Install dependencies
 
-```
+```bash
 npm install
 ```
 
 ### 2. Configure environment
 
-For **PostgreSQL + NextAuth** (recommended), copy `env.example` → `.env.local` and set at least:
+Copy [`env.example`](env.example) → `.env.local`. For **PostgreSQL + NextAuth** (recommended), set at least:
 
-```
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/DATABASE
 SAQ_DATABASE_PROVIDER=postgres
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-long-random-secret
 ```
 
-Set `NEXTAUTH_SECRET` to a strong value (never commit real secrets). If `SAQ_DATABASE_PROVIDER` is unset, the app selector falls back to the legacy `supabase` path — set `postgres` explicitly.
+- Use a strong `NEXTAUTH_SECRET` (never commit real secrets). `AUTH_SECRET` is accepted as an alias.
+- If `SAQ_DATABASE_PROVIDER` is unset, the app falls back to the legacy `supabase` path — set `postgres` explicitly for new work.
+- Optional: `NEXT_PUBLIC_BASE_PATH` for a URL prefix at build time (see `next.config.js` / [docs/DOCKER.md](docs/DOCKER.md)).
+- Legacy Supabase DB path: `NEXT_PUBLIC_SUPABASE_*` and [docs/SAQ_SUPABASE_SETUP.md](docs/SAQ_SUPABASE_SETUP.md).
 
-Legacy Supabase DB path: `NEXT_PUBLIC_SUPABASE_*` and `docs/SAQ_SUPABASE_SETUP.md`.
+### 3. Apply migrations (Postgres)
 
-### 3. Run the development server
-
+```bash
+npm run db:migrate
 ```
+
+### 4. Run the development server
+
+```bash
 npm run dev
 ```
 
-Open:
-
-```
-http://localhost:3000
-```
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Docker (full stack)
+## Docker
 
-The **`app` image is production-only** — it does **not** include `drizzle-kit`. Apply schema changes with the Compose **`migrate`** service (or `npm run db:migrate` on the host), **never** by exec’ing into `saq-app`. Details: **[docs/DOCKER.md](docs/DOCKER.md)**.
+Optional full stack (Postgres + app + Adminer). The **`app` image is production-only** and does **not** include `drizzle-kit` — apply schema with the Compose **`migrate`** service (or host `npm run db:migrate`), never by exec’ing into `saq-app`.
 
-**Typical first-time / production-style sequence** (use `.env.production` or your env file; ensure `DATABASE_URL` uses host **`postgres`** inside Compose):
+**Typical first-time / production-style sequence** (use `.env.production` or your env file; `DATABASE_URL` host should be **`postgres`** inside Compose):
 
 ```bash
 docker compose --env-file .env.production up -d postgres
@@ -146,91 +167,78 @@ docker compose --profile migrate --env-file .env.production run --rm migrate
 docker compose --env-file .env.production up -d --build app
 ```
 
-**Local dev** (`.env.docker`): `npm run docker:up`, then `npm run docker:migrate` once. App: [http://localhost:3000](http://localhost:3000) · Adminer: [http://localhost:8080](http://localhost:8080).
+**Local Compose helpers** (`.env.docker`): copy `.env.docker.example` → `.env.docker`, then `npm run docker:up` and `npm run docker:migrate` once. App: [http://localhost:3000](http://localhost:3000) · Adminer: [http://localhost:8080](http://localhost:8080).
 
-Stopping: `docker compose --env-file .env.docker down` (`npm run docker:down`).  
-**Never use `down -v` unless you intend to wipe the database volume.**
-
-Copy `.env.docker.example` → `.env.docker`, or `.env.production.example` → `.env.production` (see `COMPOSE_ENV_FILE_PATH` in the example).
+Full guide (env files, troubleshooting, domain deploy): **[docs/DOCKER.md](docs/DOCKER.md)**.  
+**Never use `docker compose down -v` unless you intend to wipe the database volume.**
 
 ---
 
-## Database tooling (npm)
+## npm scripts
 
-- `npm run db:generate` — generate Drizzle migrations from `drizzle/schema.ts`
-- `npm run db:migrate` — apply migrations (requires `DATABASE_URL`)
-- `npm run db:studio` — Drizzle Studio against the configured database
-
-Compose helpers:
-
-- `npm run docker:up` / `docker:down` / `docker:migrate` (`.env.docker`) / `docker:migrate:prod` (`.env.production`)
-
----
-
-## Development Guidelines
-
-* Business logic must remain inside `src/lib/saq/engine/`
-* Do not persist derived results (scores, actions) in the database
-* The report page must remain the single source of truth for PDF export
-* UI components should consume engine outputs, not reimplement logic
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Next.js development server |
+| `npm run build` / `start` | Production build and start |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint |
+| `npm run db:generate` | Generate Drizzle migrations from `drizzle/schema.ts` |
+| `npm run db:migrate` | Apply migrations (`DATABASE_URL` required) |
+| `npm run db:studio` | Drizzle Studio |
+| `npm run docker:up` | Compose up with `.env.docker` |
+| `npm run docker:down` | Compose down (`.env.docker`) |
+| `npm run docker:migrate` | Migrate profile with `.env.docker` |
+| `npm run docker:migrate:prod` | Migrate profile with `.env.production` |
 
 ---
 
-## Navigation and Workflow
+## User workflow and roles
 
 Authenticated flow:
 
-1. Login / signup
-2. `/saq` (GRISSA introduction page)
-3. `/saq/manage` (assessment workspace)
-   - start new assessment
-   - resume/open assessment
-   - view dashboard/report
-   - manage team/access and versions (role-dependent)
-   - delete assessment (owner only, with confirmation)
-4. `/saq/manage/[assessmentId]` — team access and **assessment versions**
-5. `/saq/assessment/[assessmentId]?versionId=…`
-   - step-based workflow; **Save progress** for scope, answers, action metadata
-   - content edits only on **draft** versions (owner/editor)
-6. `/saq/dashboard/[assessmentId]` and `/saq/report/[assessmentId]`
-   - same version context; navigation back to editor and workspace
+1. **Signup / login** — `/signup`, `/login`
+2. **Home** — `/saq` (GRISSA introduction)
+3. **Workspace** — `/saq/manage` (list/create assessments; open dashboard/report; delete if owner)
+4. **Team & versions** — `/saq/manage/[assessmentId]`
+5. **Assessment** — `/saq/assessment/[assessmentId]?versionId=…` (scope → questionnaire → results → action plan; **Save progress**; edits only on **draft** for owner/editor)
+6. **Dashboard / report** — `/saq/dashboard/[assessmentId]` and `/saq/report/[assessmentId]` (same version context)
 
-Branding:
-- Tool label: **GRISSA**
-- Expanded form: **Green Research Infrastructure Sustainability Self Assessment**
-- Main nav items: **Home** and **Workspace**
+| Role | Typical access |
+|------|----------------|
+| **Owner** | Edit draft content, create versions, manage collaborators, delete assessment, dashboard/report |
+| **Editor** | Edit draft content, create versions, dashboard/report |
+| **Reviewer** | Read-only (reserved for future review features) |
+| **Viewer** | Read-only |
 
-Role-aware behavior:
-
-- Owner: delete, manage team access, create versions, edit draft content
-- Editor: edit draft content, create versions
-- Reviewer/Viewer: read-only access
+Branding in the UI: **GRISSA** — *Green Research Infrastructure Sustainability Self Assessment*. Nav: **Home** and **Workspace**.
 
 ---
 
-## Documentation & Project Memory
+## Development guidelines
+
+- Keep business logic in `src/lib/saq/engine/` (pure TS: no React, DB, or auth).
+- Do **not** persist derived results (scores, summaries, priorities, recommendations, interpretation).
+- UI should call the repository facade and engine modules — do not reimplement scoring or prioritisation in components.
+- The report/`AssessmentReportPDF` path is the PDF export source of truth (engine-derived data).
+
+More: [docs/SAQ_DEVELOPMENT_WORKFLOW.md](docs/SAQ_DEVELOPMENT_WORKFLOW.md).
+
+---
+
+## Documentation index
 
 | Doc / folder | Purpose |
 |--------------|---------|
-| `docs/SAQ_PROJECT_CONTEXT.md` | Onboarding and product context |
-| `docs/SAQ_ARCHITECTURE.md` | Technical layers and data flow |
-| `docs/SAQ_DEVELOPMENT_WORKFLOW.md` | Where to implement; memory habits |
-| `docs/DOCKER.md` | Compose, migrations, domain deploy |
-| `docs/SAQ_SUPABASE_SETUP.md` | Legacy Supabase-hosted path |
-| `docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md` | Migration status (Postgres path live) |
-| `.cursor/rules/` | Concise Cursor coding rules |
-
----
-
-## Use Cases
-
-* Sustainability self-assessment for research infrastructures
-* Internal benchmarking and improvement planning
-* Supporting sustainability reporting and transparency
-* Preparing for certification baseline development
+| [docs/SAQ_PROJECT_CONTEXT.md](docs/SAQ_PROJECT_CONTEXT.md) | Onboarding and product context |
+| [docs/SAQ_ARCHITECTURE.md](docs/SAQ_ARCHITECTURE.md) | Technical layers and data flow |
+| [docs/SAQ_DEVELOPMENT_WORKFLOW.md](docs/SAQ_DEVELOPMENT_WORKFLOW.md) | Where to implement; memory habits |
+| [docs/DOCKER.md](docs/DOCKER.md) | Compose, migrations, domain deploy |
+| [docs/SAQ_SUPABASE_SETUP.md](docs/SAQ_SUPABASE_SETUP.md) | Legacy Supabase-hosted path |
+| [docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md](docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md) | Migration status (Postgres path is live) |
+| [`.cursor/rules/`](.cursor/rules/) | Concise Cursor coding rules |
 
 ---
 
 ## Contact
 
-For collaboration, research integration, or contributions, please reach out to Adnan (a.tahir2@uva.nl)
+For collaboration, research integration, or contributions, please reach out to Adnan (a.tahir2@uva.nl).
