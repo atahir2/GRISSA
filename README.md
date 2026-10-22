@@ -86,7 +86,7 @@ flowchart LR
   UI[UI pages / components]
   Facade[assessment.repository facade]
   API["POST /api/saq/repository"]
-  Runtime[Postgres or Supabase runtime]
+  Runtime[Postgres runtime]
   Engine[SAQ engine]
   UI --> Facade --> API --> Runtime
   UI --> Engine
@@ -136,7 +136,6 @@ NEXTAUTH_SECRET=your-long-random-secret
 - Use a strong `NEXTAUTH_SECRET` (never commit real secrets). `AUTH_SECRET` is accepted as an alias.
 - If `SAQ_DATABASE_PROVIDER` is unset, the app falls back to the legacy `supabase` path — set `postgres` explicitly for new work.
 - Optional: `NEXT_PUBLIC_BASE_PATH` for a URL prefix at build time (see `next.config.js` / [docs/DOCKER.md](docs/DOCKER.md)).
-- Legacy Supabase DB path: `NEXT_PUBLIC_SUPABASE_*` and [docs/SAQ_SUPABASE_SETUP.md](docs/SAQ_SUPABASE_SETUP.md).
 
 ### 3. Apply migrations (Postgres)
 
@@ -232,9 +231,6 @@ More: [docs/SAQ_DEVELOPMENT_WORKFLOW.md](docs/SAQ_DEVELOPMENT_WORKFLOW.md).
 | [docs/SAQ_ARCHITECTURE.md](docs/SAQ_ARCHITECTURE.md) | Technical layers and data flow |
 | [docs/SAQ_DEVELOPMENT_WORKFLOW.md](docs/SAQ_DEVELOPMENT_WORKFLOW.md) | Where to implement; memory habits |
 | [docs/DOCKER.md](docs/DOCKER.md) | Compose, migrations, domain deploy |
-| [docs/SAQ_SUPABASE_SETUP.md](docs/SAQ_SUPABASE_SETUP.md) | Legacy Supabase-hosted path |
-| [docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md](docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md) | Migration status (Postgres path is live) |
-| [`.cursor/rules/`](.cursor/rules/) | Concise Cursor coding rules |
 
 ---
 
