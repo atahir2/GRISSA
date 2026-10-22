@@ -144,7 +144,7 @@ In your env file:
 
 ## Domain deployment (outside localhost)
 
-Symptoms fixed in-repo: **middleware no longer depends on Supabase** for Postgres-only stacks; **`basePath`** no longer silently defaults to `/grisc-sa` in production (root deploy matches Docker unless you explicitly set `/grisc-sa` at build).
+Symptoms fixed in-repo: **`src/middleware.ts`** gates protected routes with **NextAuth JWT** (optional Supabase cookie refresh only if `NEXT_PUBLIC_SUPABASE_*` are set — not required for Postgres-only stacks); **`basePath`** no longer silently defaults to `/grisc-sa` in production (root deploy matches Docker unless you explicitly set a subpath at build).
 
 1. **`NEXTAUTH_URL`** (server env): use the **canonical site URL including `basePath`**, e.g. `https://mc-a4.lab.uvalight.net/grissa`, for server-side auth and redirects. Wrong host or `http` vs `https` breaks sessions.
 

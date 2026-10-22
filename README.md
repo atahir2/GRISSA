@@ -56,44 +56,25 @@ The tool supports internal decision-making as well as preparation for sustainabi
 
 * **Frontend:** Next.js (App Router), React
 * **Styling:** Tailwind CSS
-* **Backend / DB:** PostgreSQL (Drizzle ORM; optional Supabase path where still wired)
-* **Data Model:** JSON-based questionnaire + relational persistence
+* **Auth:** NextAuth (credentials) + JWT sessions
+* **Backend / DB:** PostgreSQL + Drizzle ORM (recommended); optional legacy Supabase path via `SAQ_DATABASE_PROVIDER`
+* **Data Model:** JSON questionnaire + versioned relational runtime state
 * **Export:** PDF via `@react-pdf/renderer` (engine-derived data)
+* **Deploy:** optional Docker Compose — [docs/DOCKER.md](docs/DOCKER.md)
 
 ---
 
 ## Architecture Overview
 
-The system follows a modular architecture:
+Modular layers (detail: [docs/SAQ_ARCHITECTURE.md](docs/SAQ_ARCHITECTURE.md)):
 
-### 1. Static Questionnaire Layer
+1. **Static questionnaire** — JSON themes, scope, questions, answer options
+2. **Runtime assessment** — assessments, **versions**, collaborators, scope/answers/action metadata (`SAQ_DATABASE_PROVIDER=postgres` or legacy `supabase`)
+3. **SAQ engine** — `scoring`, `results`, `actions`, `interpretation`, `scope` under `src/lib/saq/engine/`
+4. **UI** — Home / Workspace / assessment flow / dashboard / report
+5. **Export** — `AssessmentReportPDF` from the same engine outputs
 
-* Defined in JSON
-* Contains themes, scope items, questions, and answer options
-
-### 2. Runtime Assessment Layer
-
-* Stores user responses and scope selections
-* Managed via the configured repository (**Postgres** or legacy **Supabase** via `SAQ_DATABASE_PROVIDER`)
-
-### 3. SAQ Engine
-
-Located in `src/lib/saq/engine/`
-
-* `scoring.ts` → calculates capability scores
-* `results.ts` → builds aggregated results
-* `actions.ts` → generates action plans
-* `interpretation.ts` → produces readiness insights
-
-### 4. UI Layer
-
-* Assessment flow (step-based)
-* Dashboard and analytics
-* Report view
-
-### 5. Report & Export Layer
-
-* Report page composes engine outputs; PDF is generated with `@react-pdf/renderer` (`AssessmentReportPDF`)
+UI talks to persistence through the repository facade → `POST /api/saq/repository`.
 
 ---
 
@@ -101,20 +82,15 @@ Located in `src/lib/saq/engine/`
 
 ```
 src/
-  app/saq/
-    assessment/
-    dashboard/
-    report/
-
+  app/saq/           # Home, manage, assessment, dashboard, report
+  app/api/           # NextAuth, register, saq/repository
   components/saq/
-
-  lib/
-    saq/
-      engine/
-      utils/
-      questionnaire.data.json
-    supabase/
-
+  lib/saq/           # engine, repositories, permissions, questionnaire JSON
+  lib/auth/          # NextAuth options
+  lib/db/            # Drizzle + pg
+  lib/supabase/      # legacy provider path
+  middleware.ts      # NextAuth JWT gate
+drizzle/             # schema + migrations
 docs/
 .cursor/rules/
 ```
@@ -131,7 +107,7 @@ npm install
 
 ### 2. Configure environment
 
-For **PostgreSQL + NextAuth** (recommended), create `.env.local` with at least:
+For **PostgreSQL + NextAuth** (recommended), copy `env.example` → `.env.local` and set at least:
 
 ```
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
@@ -140,9 +116,9 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-long-random-secret
 ```
 
-Set `NEXTAUTH_SECRET` to a strong value (never commit real secrets).
+Set `NEXTAUTH_SECRET` to a strong value (never commit real secrets). If `SAQ_DATABASE_PROVIDER` is unset, the app selector falls back to the legacy `supabase` path — set `postgres` explicitly.
 
-A legacy Supabase-based setup may still require `NEXT_PUBLIC_SUPABASE_*` variables where that code path is enabled.
+Legacy Supabase DB path: `NEXT_PUBLIC_SUPABASE_*` and `docs/SAQ_SUPABASE_SETUP.md`.
 
 ### 3. Run the development server
 
@@ -212,11 +188,12 @@ Authenticated flow:
    - view dashboard/report
    - manage team/access and versions (role-dependent)
    - delete assessment (owner only, with confirmation)
-4. `/saq/assessment/[assessmentId]`
-   - step-based assessment workflow
-   - explicit **Save progress** button (scope, answers, action metadata)
-5. `/saq/dashboard/[assessmentId]` and `/saq/report/[assessmentId]`
-   - clear navigation back to assessment editor and assessment workspace
+4. `/saq/manage/[assessmentId]` — team access and **assessment versions**
+5. `/saq/assessment/[assessmentId]?versionId=…`
+   - step-based workflow; **Save progress** for scope, answers, action metadata
+   - content edits only on **draft** versions (owner/editor)
+6. `/saq/dashboard/[assessmentId]` and `/saq/report/[assessmentId]`
+   - same version context; navigation back to editor and workspace
 
 Branding:
 - Tool label: **GRISSA**
@@ -233,14 +210,15 @@ Role-aware behavior:
 
 ## Documentation & Project Memory
 
-This project includes a structured documentation layer:
-
-* `docs/SAQ_PROJECT_CONTEXT.md` → project overview
-* `docs/SAQ_ARCHITECTURE.md` → technical design
-* `docs/SAQ_DEVELOPMENT_WORKFLOW.md` → development guidance
-* `.cursor/rules/` → AI-assisted development rules
-
-These ensure consistency across development and enable easier onboarding for contributors.
+| Doc / folder | Purpose |
+|--------------|---------|
+| `docs/SAQ_PROJECT_CONTEXT.md` | Onboarding and product context |
+| `docs/SAQ_ARCHITECTURE.md` | Technical layers and data flow |
+| `docs/SAQ_DEVELOPMENT_WORKFLOW.md` | Where to implement; memory habits |
+| `docs/DOCKER.md` | Compose, migrations, domain deploy |
+| `docs/SAQ_SUPABASE_SETUP.md` | Legacy Supabase-hosted path |
+| `docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md` | Migration status (Postgres path live) |
+| `.cursor/rules/` | Concise Cursor coding rules |
 
 ---
 

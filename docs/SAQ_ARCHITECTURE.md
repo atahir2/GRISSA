@@ -1,85 +1,109 @@
 # SAQ Technical Architecture
 
-This document explains how the Sustainability Self-Assessment (SAQ) tool is structured for safe long-term evolution.
-
-## Project Purpose
-
-The SAQ supports research infrastructures, datacenters, and organizations in building a sustainability readiness baseline.  
-It helps users assess capability, identify gaps, prioritize improvements, and produce actionable planning outputs (dashboard + report/PDF).
+How the Sustainability Self-Assessment (SAQ / GRISSA) tool is structured for safe long-term evolution. Product purpose and onboarding: `docs/SAQ_PROJECT_CONTEXT.md`. Implementation habits: `docs/SAQ_DEVELOPMENT_WORKFLOW.md`.
 
 ## Architecture Layers
 
 ### 1) Static questionnaire layer
 
 - Source: `src/lib/saq/questionnaire.data.json`
-- Accessed through: `src/lib/saq/questionnaire.repository.ts`
-- Contains themes, scope items, questions, and answer options.
-- This layer is configuration only and is **not stored in the runtime database**.
+- Access: `src/lib/saq/questionnaire.repository.ts`
+- Themes, scope items, questions, answer options (capability scores 1–3)
+- **Not stored** in the runtime database
 
 ### 2) Runtime assessment layer
 
-- Persisted in a **database** (see `SAQ_DATABASE_PROVIDER`):
-  - **Postgres (default product direction):** Drizzle schema in `drizzle/schema.ts`, access via `src/lib/db/drizzle.ts` and `repositories/assessment.repository.postgres.ts`.
-  - **Supabase (legacy/optional):** same logical tables, RLS, and `src/lib/supabase/*` clients when the provider is set to `supabase`.
-- Tables (logical model): `profiles`, `assessments` (with `owner_user_id`), `assessment_collaborators`, `assessment_scope_selections`, `assessment_answers`, `assessment_action_items` (and related auth users linkage as per schema).
-- **IO boundary:** `src/lib/saq/assessment.repository.ts` (facade) + `repositories/assessment.repository.*`.
-- **Access rules:** `src/lib/saq/permissions.ts` + repository checks; **RLS** on the Supabase path. Not in the engine.
+Selected by **`SAQ_DATABASE_PROVIDER`**:
+
+| Value | Implementation |
+|-------|----------------|
+| `postgres` (recommended) | Drizzle schema `drizzle/schema.ts`, pool `src/lib/db/drizzle.ts`, `repositories/assessment.repository.postgres.ts` |
+| `supabase` (legacy) | `src/lib/supabase/*`, `repositories/assessment.repository.supabase.ts`, RLS in `supabase/migrations/` |
+| unset | Selector defaults to **`supabase`** — set `postgres` explicitly for new deploys |
+
+**Logical tables:** `profiles` (optional display fields), Auth.js `users` / sessions (Postgres path), `assessments` (`owner_user_id`), `assessment_versions`, `assessment_collaborators`, `assessment_scope_selections`, `assessment_answers`, `assessment_action_items`.
+
+Scope, answers, and action metadata are keyed by **`version_id`**. Version statuses: `draft` | `submitted` | `reviewed` | `archived`. Content edits require edit role **and** draft status (`canEditAssessmentVersionContent` in `permissions.ts`).
+
+**IO boundary:**
+
+- UI imports `src/lib/saq/assessment.repository.ts` (client facade).
+- Facade calls **`POST /api/saq/repository`** via `appFetch` (`src/lib/base-path.ts`).
+- Route dispatches to `getAssessmentRuntimeRepository()` (`assessment.repository.selector.ts`).
+- Domain types: `src/lib/saq/assessment.types.ts`. Access helpers: `src/lib/saq/permissions.ts`.
 
 ### 3) SAQ engine layer
 
-- Location: `src/lib/saq/engine/`
-- Key modules:
-  - `scoring.ts` - scoring and priority helpers
-  - `results.ts` - derived assessment summaries/results
-  - `actions.ts` - action-plan derivation and implementation summaries
-  - `interpretation.ts` - stakeholder-readable interpretation text
-- Engine modules are pure and framework-agnostic.
+Location: `src/lib/saq/engine/`
+
+| Module | Role |
+|--------|------|
+| `scoring.ts` | Scoring and priority helpers/types |
+| `results.ts` | Assessment results / summaries from scope + answers |
+| `actions.ts` | Action-plan items and implementation summaries |
+| `interpretation.ts` | Stakeholder-readable interpretation text |
+| `scope.ts` | In-scope maps and related helpers |
+
+Pure TypeScript: no React, no DB, no auth.
 
 ### 4) Presentation layer
 
-- Assessment flow UI: `src/app/saq/assessment/` + `src/components/saq/`
-- Dashboard UI: `src/app/saq/dashboard/`
-- Report/export UI: `src/app/saq/report/`
-- The report route computes engine-derived data and uses `AssessmentReportPDF` to generate the PDF output.
+- Assessment flow: `src/app/saq/assessment/` + `src/components/saq/`
+- Workspace / management: `src/app/saq/manage/` (`SaqLanding`, `AssessmentManagementWorkspace`)
+- Dashboard: `src/app/saq/dashboard/`
+- Report/PDF: `src/app/saq/report/` + `AssessmentReportPDF` (`@react-pdf/renderer`)
+- Shared shell: `src/app/saq/layout.tsx` (`SaqAuthenticatedHeader`, dark canvas, `BetaBanner`)
 
 ## Core Data Flow
 
-1. Authenticate (**NextAuth** session for credentials flows; middleware protects `/saq/assessment/*`, `/saq/dashboard/*`, `/saq/report/*`).
-2. Load questionnaire config from static JSON.
-3. Load runtime assessment data via repository (**Postgres or Supabase** per `SAQ_DATABASE_PROVIDER`), respecting ownership and collaborator access.
+1. Authenticate (**NextAuth** JWT). `src/middleware.ts` protects `/saq/assessment/*`, `/saq/dashboard/*`, `/saq/report/*`. If `NEXT_PUBLIC_SUPABASE_*` are set, middleware may refresh Supabase cookies but does **not** replace the NextAuth gate.
+2. Resolve active **assessment version** (`useAssessmentVersionRoute` / `?versionId=`).
+3. Load questionnaire JSON + version-scoped runtime data via repository facade.
 4. Compute derived outputs in memory through engine modules.
-5. Render assessment/dashboard/report views from those outputs.
-6. Persist only runtime edits (scope/answers/action metadata), not derived results.
+5. Render assessment / dashboard / report from those outputs.
+6. Persist only runtime edits (scope / answers / action metadata), never derived results.
 
-## Persistence Model and Boundaries
+## Persistence Boundaries
 
-- **Persisted**: runtime state required to reconstruct an assessment.
-- **Not persisted**: derived summaries, priorities, and interpretation outputs.
-- UI must not bypass repositories for direct DB access.
-- UI must not duplicate engine formulas or priority logic.
+- **Persisted:** identity/access and runtime assessment state (including versions).
+- **Not persisted:** scores, summaries, priorities, recommendations, interpretation text.
+- UI must not bypass the repository facade for direct DB access.
+- UI must not duplicate engine formulas.
 
-## Folder Structure (Practical View)
+## Auth and Collaboration
 
-- `src/lib/saq/` - domain types, repositories, engine, `permissions.ts`
-- `src/lib/auth/` - NextAuth options, safe redirects, error formatting
-- `src/lib/db/` - Drizzle + `pg` pool for PostgreSQL mode
-- `drizzle/` - `schema.ts`, `migrations/`
-- `src/lib/supabase/` - Supabase client (legacy provider path)
-- `src/components/saq/` - SAQ feature components
-- `src/components/auth/` - login/signup UI
-- `src/app/saq/` - route entry points (Home `/saq`, Workspace `/saq/manage`, assessment, dashboard, report)
-- `src/app/login/`, `src/app/signup/`, `src/app/auth/` - authentication routes
-- `middleware.ts` - session refresh and route protection for workflow routes
-- `drizzle/migrations/` - Drizzle SQL migrations (Postgres)
-- `supabase/migrations/` - Supabase SQL migrations (legacy host)
-- `docs/` - human reference docs
-- `.cursor/rules/` - Cursor-native rule memory
+- **Primary auth:** NextAuth credentials — `src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, `src/app/api/auth/register/route.ts`.
+- **Client session:** `AuthSessionProvider` sets `SessionProvider` `basePath={withBasePath("/api/auth")}` so NextAuth works under Next.js `basePath`.
+- **Roles:** `owner` | `editor` | `reviewer` | `viewer` — single source of truth in `permissions.ts`; repository enforces access.
+- **Legacy:** `/auth/callback` may exchange Supabase `?code=` when that path is enabled.
 
-For implementation process and update habits, see `docs/SAQ_DEVELOPMENT_WORKFLOW.md` (this file stays architecture-focused).
+## Folder Structure (practical)
 
-## Dashboard, Report, and Export Relationship
+```
+src/lib/saq/          domain types, permissions, questionnaire, engine, repositories, facade
+src/lib/auth/         NextAuth options, safe redirects, error formatting
+src/lib/db/           Drizzle + pg pool
+src/lib/supabase/     legacy Supabase clients (provider = supabase)
+src/lib/base-path.ts  withBasePath, appFetch, assetUrl
+src/components/saq/   feature UI
+src/components/auth/  login/signup + AuthSessionProvider
+src/app/saq/          Home, manage, assessment, dashboard, report
+src/app/api/          nextauth, register, saq/repository
+src/middleware.ts     NextAuth JWT gate (+ optional Supabase cookie refresh)
+drizzle/              schema.ts, migrations/
+supabase/migrations/  legacy host SQL
+docs/                 human reference
+.cursor/rules/        Cursor rule memory
+```
 
-- Dashboard and report reuse the same engine outputs for consistency.
-- **Shared SAQ UI shell:** `app/saq/layout.tsx` (nav + dark page canvas) and `GrissaPageHeader` page titles; dashboard/report use contextual **info banners** and light cards for metrics.
-- Report emphasizes print/PDF readability and stakeholder communication.
-- Export pipeline uses `@react-pdf/renderer` (`AssessmentReportPDF`) and must not alter engine or persistence logic.
+## Dashboard, Report, and Export
+
+- Dashboard and report reuse the same engine outputs.
+- Shared shell: dark canvas + light content cards; `GrissaPageHeader` / info banners.
+- PDF is presentation-only via `AssessmentReportPDF`; it must not change engine or persistence logic.
+
+## Related Ops Docs
+
+- Local/prod-like Compose: `docs/DOCKER.md`
+- Legacy Supabase project setup: `docs/SAQ_SUPABASE_SETUP.md`
+- Postgres migration status: `docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md`

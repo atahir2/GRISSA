@@ -5,21 +5,23 @@ alwaysApply: true
 
 # SAQ Project Overview
 
-- The SAQ tool provides sustainability self-assessment for research infrastructures, datacenters, and organizations.
+- The SAQ / **GRISSA** tool provides sustainability self-assessment for research infrastructures, datacenters, and organizations.
 - Primary outputs: capability/readiness baseline, priority gaps, action plans, dashboard views, and report/PDF export.
-- Stack: Next.js App Router, React, Tailwind CSS, **PostgreSQL + Drizzle ORM** (runtime SAQ data), **NextAuth** (credentials), optional legacy Supabase repository path via `SAQ_DATABASE_PROVIDER`, `@react-pdf/renderer` for PDF export.
-- Optional **Docker Compose** for local/prod-like runs: see `docs/DOCKER.md`.
+- Stack: Next.js App Router, React, Tailwind CSS, **PostgreSQL + Drizzle** (recommended runtime path), **NextAuth** (credentials), optional legacy Supabase repository via `SAQ_DATABASE_PROVIDER`, `@react-pdf/renderer` for PDF.
+- Runtime data is **versioned** (`assessment_versions`; scope/answers/actions keyed by `version_id`).
+- Optional **Docker Compose**: `docs/DOCKER.md`.
 
 ## Session Defaults
 
-- Start from existing architecture and phrasing; avoid introducing alternate SAQ concepts.
+- Start from existing architecture and phrasing; avoid alternate SAQ concepts.
 - Keep report language stakeholder-friendly: baseline-oriented, not certification-decision language.
-- Apply focused rules from `architecture.mdc`, `saq-engine.mdc`, `ui-dashboard-report.mdc`, `postgres-persistence.mdc`, `supabase-persistence.mdc` (legacy), and `auth-and-collaboration.mdc` when editing auth, persistence, collaborators, or `permissions.ts`.
+- Apply focused rules: `architecture.mdc`, `saq-engine.mdc`, `ui-dashboard-report.mdc`, `postgres-persistence.mdc`, `supabase-persistence.mdc` (legacy), `auth-and-collaboration.mdc`.
 
 ## Canonical Human Docs
 
-- `docs/SAQ_PROJECT_CONTEXT.md`
-- `docs/SAQ_ARCHITECTURE.md`
-- `docs/SAQ_DEVELOPMENT_WORKFLOW.md`
-- `docs/SAQ_SUPABASE_SETUP.md` (legacy Supabase hosting)
-- `docs/DOCKER.md` (Compose + Postgres app stack)
+- `docs/SAQ_PROJECT_CONTEXT.md` — onboarding / product context
+- `docs/SAQ_ARCHITECTURE.md` — technical layers and data flow
+- `docs/SAQ_DEVELOPMENT_WORKFLOW.md` — where to implement; memory habits
+- `docs/DOCKER.md` — Compose + Postgres app stack
+- `docs/SAQ_SUPABASE_SETUP.md` — legacy Supabase-hosted path
+- `docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md` — migration status (Postgres path is live)

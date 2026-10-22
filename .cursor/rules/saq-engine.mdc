@@ -14,6 +14,7 @@ Applies when editing `src/lib/saq/` and `src/lib/saq/engine/`.
 - `results.ts`: builds assessment results/summaries from scope + answers.
 - `actions.ts`: builds action-plan items and implementation summaries from results + action metadata.
 - `interpretation.ts`: converts results/action summaries into stakeholder-readable interpretation text.
+- `scope.ts`: in-scope maps and related scope helpers.
 
 ## Guardrails
 
@@ -21,4 +22,5 @@ Applies when editing `src/lib/saq/` and `src/lib/saq/engine/`.
 - Preserve type-level contracts used by dashboard/report/assessment flow.
 - Prefer additive, well-scoped changes over broad rewrites in scoring semantics.
 - If changing formulas, thresholds, or priority mapping, update tests/docs in the same change.
-- Do not couple engine code to database access (Postgres/Drizzle, Supabase clients), Next.js, or UI concerns.
+- Do not couple engine code to database access (Postgres/Drizzle, Supabase clients), Next.js, auth, or UI concerns.
+- Engine does not know about assessment **versions**; callers pass the version-scoped scope/answers/metadata already loaded from the repository.

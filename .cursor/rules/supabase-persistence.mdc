@@ -1,25 +1,26 @@
 ---
 description: Legacy Supabase persistence boundaries and safe update practices
-globs: "{src/lib/supabase/**/*.ts,src/lib/saq/assessment.repository.ts,supabase/migrations/**/*.sql}"
+globs: "{src/lib/supabase/**/*.ts,src/lib/saq/repositories/assessment.repository.supabase.ts,supabase/migrations/**/*.sql}"
 alwaysApply: false
 ---
 
 # Supabase Persistence Rules (legacy path)
 
-Use when **`SAQ_DATABASE_PROVIDER=supabase`** or when editing Supabase clients/migrations. For the **Postgres/Drizzle** path, see **`postgres-persistence.mdc`**.
+Use when **`SAQ_DATABASE_PROVIDER=supabase`** or when editing Supabase clients/migrations. For Postgres/Drizzle, see **`postgres-persistence.mdc`**. Product direction and Docker stacks use **postgres**.
 
-Applies to `src/lib/supabase/`, Supabase-oriented repository code paths, and `supabase/migrations/`.
+Applies to `src/lib/supabase/`, `repositories/assessment.repository.supabase.ts`, and `supabase/migrations/`.
 
 ## Persisted Runtime State
 
 - `profiles` (per auth user; optional display fields)
 - `assessments` (includes `owner_user_id`)
-- `assessment_collaborators` (per-assessment access: `user_id`, `role`, `invited_by`; owner represented here as well)
+- `assessment_versions` (status, label, version_number; content keyed by `version_id`)
+- `assessment_collaborators` (`user_id`, `role`, `invited_by`; owner represented here as well)
 - `assessment_scope_selections`
 - `assessment_answers`
-- `assessment_action_items` (metadata fields such as effort/leader/deadline/status/remarks)
+- `assessment_action_items` (effort/leader/deadline/status/remarks only)
 
-RLS may use `SECURITY DEFINER` SQL helpers for membership checks (e.g. to avoid recursion on `assessment_collaborators`). See migrations and `docs/SAQ_SUPABASE_SETUP.md`.
+RLS may use `SECURITY DEFINER` helpers for membership checks. See migrations and `docs/SAQ_SUPABASE_SETUP.md`.
 
 ## Not Persisted
 
@@ -28,12 +29,12 @@ RLS may use `SECURITY DEFINER` SQL helpers for membership checks (e.g. to avoid 
 
 ## Repository Boundary Rules
 
-- Keep Supabase access inside repository/client modules.
+- Keep Supabase access inside repository/client modules (and the shared API route dispatcher).
 - Map DB rows to domain types in repositories; keep UI and engine unaware of DB row shape.
-- Prefer idempotent upsert/update patterns for per-assessment runtime tables.
+- Prefer idempotent upsert/update patterns for per-version runtime tables.
 - Do not add questionnaire structure tables unless the architecture decision is explicitly changed.
 
 ## Safe Migration Practices
 
-- Additive schema changes first; avoid destructive changes without migration plan.
-- Keep migration intent documented in `docs/SAQ_SUPABASE_SETUP.md` when setup steps change.
+- Additive schema changes first; avoid destructive changes without a migration plan.
+- Keep setup steps documented in `docs/SAQ_SUPABASE_SETUP.md` when procedures change.
