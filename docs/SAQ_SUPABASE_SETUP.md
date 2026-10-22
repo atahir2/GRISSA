@@ -1,18 +1,22 @@
-# SAQ Supabase persistence setup
+# SAQ Supabase persistence setup (legacy path)
 
-The Sustainability Self-Assessment (SAQ) tool persists runtime data in Supabase:
+Use this only when running with **`SAQ_DATABASE_PROVIDER=supabase`**. New deployments should use **PostgreSQL + Drizzle + NextAuth** (`docs/DOCKER.md`, `docs/SAQ_ARCHITECTURE.md`).
 
-- **assessments** — one row per assessment (id, organisation name, owner user, timestamps)
-- **assessment_scope_selections** — per-assessment scope and target capability (assessment_id, scope_id, in_scope, target_capability)
-- **assessment_answers** — per-assessment question answers (assessment_id, question_id, selected_score)
-- **assessment_action_items** — action metadata only (effort_required, leader, deadline, status, remarks); priorities are derived by the engine
+The recommended app authentication path is **NextAuth**. This guide covers the **Supabase-hosted database** (and historical Supabase Auth / RLS) for the legacy repository implementation.
 
-Static questionnaire configuration stays in the app (`questionnaire.data.json`); only runtime state is stored in the database.
+Runtime tables (logical model; includes versioning):
 
-For architecture boundaries and workflow conventions, also see:
+- **profiles** — one row per auth user (id, optional names)
+- **assessments** — organisation name, owner user, timestamps
+- **assessment_versions** — version number, label, status (`draft` | `submitted` | `reviewed` | `archived`)
+- **assessment_collaborators** — per-assessment access (role, invited_by)
+- **assessment_scope_selections** — scope + target capability, keyed by **version_id**
+- **assessment_answers** — selected scores, keyed by **version_id**
+- **assessment_action_items** — effort/leader/deadline/status/remarks only; priorities are engine-derived, keyed by **version_id**
 
-- `docs/SAQ_ARCHITECTURE.md`
-- `docs/SAQ_DEVELOPMENT_WORKFLOW.md`
+Static questionnaire stays in `questionnaire.data.json`.
+
+Also see: `docs/SAQ_ARCHITECTURE.md`, `docs/SAQ_DEVELOPMENT_WORKFLOW.md`, `docs/SAQ_SUPABASE_TO_POSTGRES_MIGRATION.md`.
 
 ---
 
@@ -26,77 +30,74 @@ For architecture boundaries and workflow conventions, also see:
 
 ---
 
-## 2. Run the migration
-
-Apply the SAQ schema in one of these ways.
+## 2. Run the migrations
 
 ### Option A: Supabase Dashboard (SQL Editor)
 
-1. In your project, open **SQL Editor**.
-2. Run migrations **in order** (each file once, or use `db push` with the CLI):
-   - `supabase/migrations/20250310000000_create_saq_runtime_tables.sql`
-   - `supabase/migrations/20250310100000_saq_rls_policies.sql` (anon policies; superseded by the next file when you enable auth)
-   - `supabase/migrations/20250401120000_auth_profiles_owner_rls.sql` (profiles, `owner_user_id`, user-scoped RLS)
+Run migrations **in order**:
 
-**Phase 1 auth:** After the auth migration, enable **Email** under **Authentication → Providers** in the Supabase dashboard so users can sign up and sign in with email/password.
+1. `supabase/migrations/20250310000000_create_saq_runtime_tables.sql`
+2. `supabase/migrations/20250310100000_saq_rls_policies.sql` (anon policies; superseded when auth is enabled)
+3. `supabase/migrations/20250401120000_auth_profiles_owner_rls.sql` (profiles, `owner_user_id`, user-scoped RLS)
+4. `supabase/migrations/20250402120000_assessment_collaborators.sql`
+5. `supabase/migrations/20250403130000_fix_rls_recursion_collaborators.sql` (SECURITY DEFINER helpers)
+6. `supabase/migrations/20250404140000_assessment_versions.sql`
+7. `supabase/migrations/20250405120000_assure_assessment_insert_policy.sql`
+8. `supabase/migrations/20250406120000_create_assessment_bundle_rpc.sql`
 
-### Option B: Supabase CLI (linked project)
+If you still use Supabase Auth for email confirmation on this path: enable **Email** under **Authentication → Providers**, set `NEXT_PUBLIC_SITE_URL`, and add redirect URLs including `/auth/callback`.
+
+### Option B: Supabase CLI
 
 ```bash
-# From project root
 npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
-
-(`project-ref` is in the project URL or in **Project Settings → General**.)
 
 ---
 
 ## 3. Configure the app
 
-1. Copy the example env file:
-   ```bash
-   cp env.example .env.local
-   ```
-2. Edit `.env.local` and set:
-   - `NEXT_PUBLIC_SUPABASE_URL` — your project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — your anon public key
+1. Copy `env.example` → `.env.local`.
+2. Set at least:
+   - `SAQ_DATABASE_PROVIDER=supabase`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SITE_URL` (recommended in production; no trailing slash)
+3. Restart the Next.js dev server after changing env vars.
 
-Restart the Next.js dev server after changing env vars.
+For a Postgres-primary local stack instead, ignore this file and follow `docs/DOCKER.md`.
 
 ---
 
 ## 4. Verify
 
-- Open the SAQ landing page and **Start a new assessment** (enter an organisation name).
-- You should be redirected to `/saq/assessment/[id]`.
-- Complete scope, questionnaire, and action plan; use **Next** / **Back**. Status should show “Saving…” then “Saved”.
-- Return to the SAQ landing; the new assessment should appear in **Your assessments**. Opening it should load the saved scope, answers, and action metadata.
+- Sign in (NextAuth or legacy Supabase flow as configured), open Workspace, start an assessment.
+- Confirm a version exists and scope/answers/action metadata save and reload with `?versionId=`.
+- Collaborator RLS: shared users can view; only owner/editor edit drafts.
 
 ---
 
 ## Tables overview
 
-| Table                         | Purpose                                                                 |
-|------------------------------|-------------------------------------------------------------------------|
-| `profiles`                   | One row per auth user (id, optional full_name, organisation_name, timestamps). |
-| `assessments`                | One row per assessment run (id, organisation_name, owner_user_id, created_at, updated_at). |
-| `assessment_scope_selections`| One row per scope item per assessment; UNIQUE(assessment_id, scope_id). |
-| `assessment_answers`         | One row per question per assessment; UNIQUE(assessment_id, question_id). |
-| `assessment_action_items`    | Action metadata per question per assessment; UNIQUE(assessment_id, question_id). |
+| Table | Purpose |
+|-------|---------|
+| `profiles` | Display fields per auth user |
+| `assessments` | Assessment run + `owner_user_id` |
+| `assessment_versions` | Versioned snapshots / draft status |
+| `assessment_collaborators` | Roles: owner / editor / reviewer / viewer |
+| `assessment_scope_selections` | Per version + scope item |
+| `assessment_answers` | Per version + question |
+| `assessment_action_items` | Per version + question metadata |
 
-All child tables use `ON DELETE CASCADE` so deleting an assessment removes its scope, answers, and action items.
+Child rows typically use `ON DELETE CASCADE` from the assessment (and versions cascade to version-scoped children).
 
 ---
 
-## Row Level Security (RLS) and authentication
+## Row Level Security (RLS)
 
-The Phase 1 migration `20250401120000_auth_profiles_owner_rls.sql` enables RLS on `profiles` and replaces open anon policies on SAQ tables with **authenticated** policies:
+- Owner and collaborator policies; edit requires owner or editor (via `rls_user_can_edit_assessment` and related helpers).
+- Avoid recursive `SELECT` on `assessment_collaborators` inside its own policies — use bundled `SECURITY DEFINER` helpers (`rls_user_has_assessment_access`, etc.).
+- The legacy client uses the **anon** key with the user JWT when Supabase Auth is in play.
 
-- Users may only read/update their own **profile** row (`profiles.id = auth.uid()`).
-- Users may only access **assessments** they own (`assessments.owner_user_id = auth.uid()`).
-- **Scope selections**, **answers**, and **action items** are allowed only when the parent assessment is owned by the current user.
-
-The app uses the **anon** key in the browser and server; authenticated requests send the user JWT so these policies apply. Unauthenticated clients cannot read or write SAQ runtime data after this migration.
-
-**Note:** Applying `20250401120000_auth_profiles_owner_rls.sql` deletes any existing `assessments` rows that have no `owner_user_id` (legacy data from before ownership). New assessments always set `owner_user_id` from the signed-in user.
+**Note:** Early auth migrations may delete legacy `assessments` rows with no `owner_user_id`. New assessments set ownership and insert an owner collaborator row.

@@ -1,0 +1,80 @@
+# SAQ / GRISSA — Next.js + PostgreSQL + Adminer
+#
+# Prerequisites: copy `.env.docker.example` → `.env.docker` (or use `.env.production` — see docs/DOCKER.md).
+#
+# The `app` image is production-only (no drizzle-kit). Run schema changes via the `migrate` service
+# (`docker compose run --rm migrate`), never by exec’ing into `app`.
+#
+# Env file injected into containers defaults to `.env.docker`. Override with COMPOSE_ENV_FILE_PATH
+# (set inside your compose env file, e.g. COMPOSE_ENV_FILE_PATH=.env.production).
+
+name: saq
+
+x-saq-env: &saq-env
+  env_file:
+    - ${COMPOSE_ENV_FILE_PATH:-.env.docker}
+
+services:
+  postgres:
+    <<: *saq-env
+    image: postgres:16
+    container_name: grisc-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - saq_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    <<: *saq-env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
+    container_name: saq-app
+    restart: unless-stopped
+    ports:
+      - "${APP_HOST_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  adminer:
+    <<: *saq-env
+    image: adminer:4
+    container_name: saq-adminer
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_HOST_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # One-shot Drizzle migrations (node + devDependencies via npm ci). Not started by `up` — use
+  # `docker compose --profile migrate run --rm migrate`. Does not belong in the production `app` image.
+  migrate:
+    <<: *saq-env
+    image: node:20-bookworm-slim
+    container_name: saq-migrate
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - migrate_node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - migrate
+    command: ["sh", "-c", "npm ci && npm run db:migrate"]
+
+volumes:
+  saq_postgres_data:
+  migrate_node_modules:

@@ -16,7 +16,7 @@ import { buildAssessmentResults } from "@/src/lib/saq/engine/results";
 import { buildActionPlan, type ExistingActionMetadata } from "@/src/lib/saq/engine/actions";
 import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
 import {
-  getAssessmentById,
+  getAssessmentAccess,
   loadScopeSelections,
   loadAnswers,
   loadActionMetadata,
@@ -25,6 +25,9 @@ import {
   saveActionMetadata,
   type ActionMetadata,
 } from "@/src/lib/saq/assessment.repository";
+import { canEditAssessment, canEditAssessmentVersionContent } from "@/src/lib/saq/permissions";
+import { useAssessmentVersionRoute } from "./useAssessmentVersionRoute";
+import { GrissaPageHeader } from "./GrissaPageHeader";
 
 const STEPS = ["Scope & Goals", "Questionnaire", "Results", "Action Plan"] as const;
 
@@ -36,9 +39,20 @@ interface AssessmentLayoutProps {
 
 export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(!!assessmentId);
+  const {
+    versions,
+    versionsLoading,
+    versionError,
+    effectiveVersionId,
+    currentVersion,
+  } = useAssessmentVersionRoute(assessmentId);
+
+  const [dataLoading, setDataLoading] = useState(!!assessmentId);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [assessmentName, setAssessmentName] = useState<string | null>(null);
+  const [myRole, setMyRole] = useState<
+    import("@/src/lib/saq/permissions").AssessmentRole | null
+  >(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -57,27 +71,37 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   >({});
 
   useEffect(() => {
+    setCurrentStep(0);
+  }, [effectiveVersionId]);
+
+  useEffect(() => {
     if (!assessmentId) {
-      setLoading(false);
+      setDataLoading(false);
+      return;
+    }
+    if (!effectiveVersionId || versionsLoading) {
       return;
     }
     let cancelled = false;
+    setDataLoading(true);
+    setLoadError(null);
     (async () => {
       try {
-        const [assessment, scope, ans, meta] = await Promise.all([
-          getAssessmentById(assessmentId),
-          loadScopeSelections(assessmentId),
-          loadAnswers(assessmentId),
-          loadActionMetadata(assessmentId),
-        ]);
+        const access = await getAssessmentAccess(assessmentId);
         if (cancelled) return;
-        if (!assessment) {
-          setLoadError("Assessment not found.");
-          setLoading(false);
+        if (!access) {
+          setLoadError("Access denied or assessment not found.");
+          setDataLoading(false);
           return;
         }
-        setAssessmentName(assessment.organisationName);
-        // Merge loaded scope with all scope items so we have one entry per scope (full persistence)
+        setMyRole(access.myRole);
+        const [scope, ans, meta] = await Promise.all([
+          loadScopeSelections(assessmentId, effectiveVersionId),
+          loadAnswers(assessmentId, effectiveVersionId),
+          loadActionMetadata(assessmentId, effectiveVersionId),
+        ]);
+        if (cancelled) return;
+        setAssessmentName(access.assessment.organisationName);
         const scopeByScopeId = new Map(scope.map((s) => [s.scopeId, s]));
         const mergedScope = scopeItems.map((si) => {
           const loaded = scopeByScopeId.get(si.id);
@@ -105,40 +129,50 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
           setLoadError(e instanceof Error ? e.message : "Failed to load assessment.");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setDataLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [assessmentId]);
+  }, [assessmentId, effectiveVersionId, versionsLoading, scopeItems]);
+
+  const canEditRole = myRole !== null && canEditAssessment(myRole);
+  const canEditThisVersion =
+    canEditRole && canEditAssessmentVersionContent(myRole, currentVersion?.status ?? null);
+  const readOnly = assessmentId ? !canEditThisVersion : false;
+
+  const loading =
+    !!assessmentId &&
+    !versionError &&
+    (versionsLoading || dataLoading || !effectiveVersionId);
 
   const persistScope = useCallback(async () => {
-    if (!assessmentId) return;
+    if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
     setSaveStatus("saving");
     try {
-      await saveScopeSelections(assessmentId, scopeSelections);
+      await saveScopeSelections(assessmentId, effectiveVersionId, scopeSelections);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
       setSaveStatus("error");
     }
-  }, [assessmentId, scopeSelections]);
+  }, [assessmentId, effectiveVersionId, scopeSelections, canEditThisVersion]);
 
   const persistAnswers = useCallback(async () => {
-    if (!assessmentId) return;
+    if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
     setSaveStatus("saving");
     try {
-      await saveAnswers(assessmentId, answers);
+      await saveAnswers(assessmentId, effectiveVersionId, answers);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
       setSaveStatus("error");
     }
-  }, [assessmentId, answers]);
+  }, [assessmentId, effectiveVersionId, answers, canEditThisVersion]);
 
   const persistActionMetadata = useCallback(async () => {
-    if (!assessmentId) return;
+    if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
     setSaveStatus("saving");
     try {
       const combined: Record<string, ActionMetadata> = {};
@@ -148,13 +182,25 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
       for (const [qId, m] of Object.entries(actionMetadataByQuestionId)) {
         if (!combined[qId]) combined[qId] = m;
       }
-      await saveActionMetadata(assessmentId, combined);
+      await saveActionMetadata(assessmentId, effectiveVersionId, combined);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
       setSaveStatus("error");
     }
-  }, [assessmentId, effortByQuestionId, actionMetadataByQuestionId]);
+  }, [assessmentId, effectiveVersionId, effortByQuestionId, actionMetadataByQuestionId, canEditThisVersion]);
+
+  const saveAllProgress = useCallback(async () => {
+    if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
+    setSaveStatus("saving");
+    try {
+      await Promise.all([persistScope(), persistAnswers(), persistActionMetadata()]);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("error");
+    }
+  }, [assessmentId, effectiveVersionId, canEditThisVersion, persistScope, persistAnswers, persistActionMetadata]);
 
   const assessmentResults = useMemo(
     () => buildAssessmentResults(scopeSelections, answers),
@@ -201,9 +247,9 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   const goNext = useCallback(() => {
     const next = currentStep + 1;
     if (next >= STEPS.length) {
-      if (assessmentId) {
+      if (assessmentId && effectiveVersionId) {
         persistActionMetadata().then(() =>
-          router.push(`/saq/dashboard/${assessmentId}`)
+          router.push(`/saq/dashboard/${assessmentId}?versionId=${effectiveVersionId}`)
         );
       } else {
         router.push("/saq");
@@ -217,7 +263,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
     } else {
       setCurrentStep(next);
     }
-  }, [assessmentId, currentStep, persistScope, persistAnswers, persistActionMetadata, router]);
+  }, [assessmentId, effectiveVersionId, currentStep, persistScope, persistAnswers, persistActionMetadata, router]);
 
   const goBack = useCallback(() => {
     const prev = Math.max(0, currentStep - 1);
@@ -230,29 +276,40 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
     }
   }, [assessmentId, currentStep, persistScope, persistAnswers]);
 
+  const combinedError = versionError || loadError;
+  const showSaveButton = !!assessmentId && canEditThisVersion;
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-5xl px-4 py-16 text-center">
-          <p className="text-slate-600">Loading assessment…</p>
+      <main className="min-h-0 flex-1 bg-transparent">
+      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+          <p className="text-slate-400">Loading assessment…</p>
+          <div className="mx-auto mt-4 h-1 w-32 animate-pulse rounded bg-slate-600" />
         </div>
       </main>
     );
   }
 
-  if (loadError && assessmentId) {
+  if (combinedError && assessmentId) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-5xl px-4 py-16">
+      <main className="min-h-0 flex-1 bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-16">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            {loadError}
+            {combinedError.includes("Access denied") ? (
+              <>
+                <strong className="font-semibold">Access denied.</strong> You do not have permission to open this
+                assessment, or it does not exist.
+              </>
+            ) : (
+              combinedError
+            )}
           </div>
           <button
             type="button"
-            onClick={() => router.push("/saq")}
+            onClick={() => router.push("/saq/manage")}
             className="mt-4 text-sm font-medium text-emerald-600 hover:underline"
           >
-            Back to SAQ
+            Back to assessments
           </button>
         </div>
       </main>
@@ -260,28 +317,50 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-            Sustainability Self-Assessment
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 sm:text-base">
-            Prepare a certification baseline for your Research Infrastructure by defining scope, answering the questionnaire, and reviewing results and recommended actions.
-          </p>
+    <main className="min-h-0 flex-1 bg-transparent pb-12">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <GrissaPageHeader
+          title="GRISSA Assessment"
+          description="Prepare a certification baseline for your Research Infrastructure by defining scope, answering the questionnaire, and reviewing results and recommended actions."
+        >
           {assessmentName && (
-            <p className="mt-2 text-sm font-medium text-slate-700">
+            <p className="mt-2 text-sm font-medium text-slate-300">
               Assessment: {assessmentName}
+              {myRole && (
+                <span className="ml-2 inline-flex rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-100">
+                  {myRole === "owner"
+                    ? "Owner"
+                    : myRole === "editor"
+                      ? "Editor"
+                      : myRole === "reviewer"
+                        ? "Reviewer"
+                        : "Viewer"}
+                </span>
+              )}
             </p>
           )}
-          {assessmentId && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+          {readOnly && (
+            <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              {canEditRole && currentVersion && currentVersion.status !== "draft" ? (
+                <>
+                  This version is <strong>{currentVersion.status}</strong>. Content is read-only; switch to a draft
+                  version or create a new version to edit.
+                </>
+              ) : (
+                <>
+                  You have <strong>view-only</strong> access. Editing is disabled; you can still review results and steps.
+                </>
+              )}
+            </p>
+          )}
+          {assessmentId && canEditThisVersion && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-slate-400">
               {saveStatus === "saving" && <span>Saving…</span>}
               {saveStatus === "saved" && <span className="text-emerald-600">Saved</span>}
               {saveStatus === "error" && <span className="text-red-600">Save failed</span>}
             </div>
           )}
-        </header>
+        </GrissaPageHeader>
 
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
@@ -309,6 +388,39 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
           </div>
         </div>
 
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              disabled={!canGoBack}
+              onClick={goBack}
+              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Back
+            </button>
+            <div className="flex items-center gap-2">
+              {showSaveButton && (
+                <button
+                  type="button"
+                  onClick={() => void saveAllProgress()}
+                  disabled={saveStatus === "saving"}
+                  className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+                >
+                  {saveStatus === "saving" ? "Saving..." : "Save progress"}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={!canGoNext}
+                onClick={goNext}
+                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {currentStep === STEPS.length - 1 ? "Finish" : "Next"}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-4 py-3 sm:px-6">
             <AssessmentStepper currentStep={currentStep} steps={STEPS} />
@@ -321,6 +433,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
                 scopeItems={scopeItems}
                 scopeSelections={scopeSelections}
                 onChange={setScopeSelections}
+                readOnly={readOnly}
               />
             )}
             {currentStep === 1 && (
@@ -331,6 +444,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
                 scopeSelections={scopeSelections}
                 answers={answers}
                 onChange={setAnswers}
+                readOnly={readOnly}
               />
             )}
             {currentStep === 2 && (
@@ -339,6 +453,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
             {currentStep === 3 && (
               <ActionPlanStep
                 actionPlan={actionPlan}
+                readOnly={readOnly}
                 onEffortChange={(questionId, effort) =>
                   setEffortByQuestionId((prev) => ({
                     ...prev,
@@ -360,7 +475,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
               </p>
             )}
 
-            <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
               <button
                 type="button"
                 disabled={!canGoBack}
@@ -369,20 +484,39 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
               >
                 Back
               </button>
-              <span className="text-sm text-slate-500">
-                Step {currentStep + 1} of {STEPS.length}
-              </span>
-              <button
-                type="button"
-                disabled={!canGoNext}
-                onClick={goNext}
-                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {currentStep === STEPS.length - 1 ? "Finish" : "Next"}
-              </button>
+              <div className="flex items-center gap-2">
+                {showSaveButton && (
+                  <button
+                    type="button"
+                    onClick={() => void saveAllProgress()}
+                    disabled={saveStatus === "saving"}
+                    className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+                  >
+                    {saveStatus === "saving" ? "Saving..." : "Save progress"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={!canGoNext}
+                  onClick={goNext}
+                  className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {currentStep === STEPS.length - 1 ? "Finish" : "Next"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
+        {assessmentId && myRole && versions.length > 1 && (
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            You are currenlty viewing version{" "}
+            <span className="font-medium text-slate-900">
+              {currentVersion ? `v${currentVersion.versionNumber}` : "unknown"}
+            </span>
+            . Manage versions and team access from Workspace.
+          </div>
+        )}
       </div>
     </main>
   );

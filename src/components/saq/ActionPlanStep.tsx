@@ -16,6 +16,7 @@ interface ActionPlanStepProps {
   actionPlan: ActionPlan;
   onEffortChange: (questionId: string, effort: EffortRequired) => void;
   onActionMetadataChange?: (questionId: string, patch: ActionMetadataPatch) => void;
+  readOnly?: boolean;
 }
 
 const EFFORT_OPTIONS: EffortRequired[] = ["Low", "Medium", "High"];
@@ -29,11 +30,17 @@ export function ActionPlanStep({
   actionPlan,
   onEffortChange,
   onActionMetadataChange,
+  readOnly = false,
 }: ActionPlanStepProps) {
   const summary = actionPlan.summary;
 
   return (
     <div className="space-y-8">
+      {readOnly && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          You have <strong>view-only</strong> access. Action metadata cannot be edited.
+        </div>
+      )}
       <SectionHeader
         title="Action Plan"
         subtitle="Prioritised actions derived from your answers. Set effort required and optionally assign leader, deadline, status and remarks for each item."
@@ -111,7 +118,8 @@ export function ActionPlanStep({
                           Effort required
                         </label>
                         <select
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:w-auto lg:w-full"
+                          disabled={readOnly}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100 sm:w-auto lg:w-full"
                           value={item.effortRequired ?? ""}
                           onChange={(e) =>
                             onEffortChange(
@@ -139,7 +147,7 @@ export function ActionPlanStep({
                     </div>
                   </div>
                   {onActionMetadataChange && (
-                    <div className="border-t border-slate-200 bg-slate-50/50 px-4 py-3">
+                    <div className={`border-t border-slate-200 bg-slate-50/50 px-4 py-3 ${readOnly ? "opacity-90" : ""}`}>
                       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
                         Optional: assign and track
                       </p>
@@ -150,7 +158,8 @@ export function ActionPlanStep({
                           </label>
                           <input
                             type="text"
-                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            disabled={readOnly}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100"
                             placeholder="Name or role"
                             value={item.leader ?? ""}
                             onChange={(e) =>
@@ -166,7 +175,8 @@ export function ActionPlanStep({
                           </label>
                           <input
                             type="date"
-                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            disabled={readOnly}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100"
                             value={
                               item.deadline
                                 ? item.deadline.slice(0, 10)
@@ -184,7 +194,8 @@ export function ActionPlanStep({
                             Status
                           </label>
                           <select
-                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            disabled={readOnly}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100"
                             value={item.status ?? ""}
                             onChange={(e) =>
                               onActionMetadataChange(item.questionId, {
@@ -207,7 +218,8 @@ export function ActionPlanStep({
                           </label>
                           <input
                             type="text"
-                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            disabled={readOnly}
+                            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100"
                             placeholder="Notes"
                             value={item.remarks ?? ""}
                             onChange={(e) =>

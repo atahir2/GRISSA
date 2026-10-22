@@ -13,7 +13,6 @@ export function ThemePerformanceCard({
   className = "",
 }: ThemePerformanceCardProps) {
   const totalQuestions = summary.totalQuestions || 1;
-  const completionPct = Math.round(summary.completionRate);
 
   return (
     <div

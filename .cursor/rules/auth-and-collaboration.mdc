@@ -1,0 +1,39 @@
+---
+description: Auth, routes, collaboration roles, versions, and permission helpers
+globs: "{src/lib/auth/**/*.ts,src/lib/saq/permissions.ts,src/middleware.ts,src/app/api/auth/**/*.ts,src/app/auth/**/*.tsx,src/app/login/**/*.tsx,src/app/signup/**/*.tsx,src/lib/supabase/middleware.ts,src/components/auth/**/*.tsx,src/components/saq/SaqAuthenticatedHeader.tsx,src/components/saq/AssessmentCollaboratorsPanel.tsx,src/components/saq/AssessmentVersionsPanel.tsx,src/components/saq/useAssessmentVersionRoute.ts}"
+alwaysApply: false
+---
+
+# Auth and Collaboration Rules
+
+## Authentication
+
+- **Primary app auth:** **NextAuth** (credentials) with PostgreSQL-backed users via Drizzle adapter (`src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, register route). Session strategy is **JWT**.
+- **`AuthSessionProvider`:** wraps **`SessionProvider`** with **`basePath={withBasePath("/api/auth")}`** so client auth works under Next.js `basePath`.
+- **Middleware:** only **`src/middleware.ts`** (do not add a root `middleware.ts` — Next prioritizes root over `src/` and would shadow this file). Gate assessment / dashboard / report with **`next-auth/jwt`** `getToken`. If `NEXT_PUBLIC_SUPABASE_*` are set, optionally refresh Supabase cookies; that does **not** replace the NextAuth gate.
+- **Public:** `/saq` intro, `/login`, `/signup`, `/saq/manage` are not behind the middleware matcher; protected workflows redirect to Login with `next=…` when there is no JWT.
+- **Legacy:** `/auth/callback` may exchange Supabase `?code=` when that path is enabled; credentials flows use NextAuth forms.
+
+## Versions and collaboration data
+
+- **`assessment_versions`** — draft/submitted/reviewed/archived; UI resolves via `useAssessmentVersionRoute` (`?versionId=`).
+- **`canCreateAssessmentVersion`**, **`canEditAssessmentVersionContent`** (edit role + **draft** only) live in `permissions.ts`.
+- **`profiles`** — optional display fields (Supabase path tied to auth users; Postgres path uses Auth.js `users` plus profiles as modeled in schema).
+- **`assessments.owner_user_id`** — required; creator is owner.
+- **`assessment_collaborators`** — roles `owner` | `editor` | `reviewer` | `viewer`. On Supabase, RLS uses `SECURITY DEFINER` helpers to avoid policy recursion.
+
+## Permissions (single source of truth)
+
+- **`src/lib/saq/permissions.ts`** — `canViewAssessment`, `canEditAssessment`, `canManageCollaborators`, `canDeleteAssessment`, `canExportReport`, `canAccessDashboard`, version helpers, etc.
+- Repository + API route enforce access; UI uses helpers + `readOnly` props.
+
+## UI
+
+- **Collaborators:** `AssessmentCollaboratorsPanel`; listing may use provider-specific RPC/queries for emails.
+- **Versions:** `AssessmentVersionsPanel` / manage workspace; keep version resolution shared.
+- **Read-only:** viewers/reviewers (and non-draft versions) — permission helpers, not duplicate engine logic.
+
+## Boundaries
+
+- Do not persist derived SAQ results; auth/collaboration/version tables are identity, access, and runtime state only.
+- Engine modules remain free of Supabase and auth imports.

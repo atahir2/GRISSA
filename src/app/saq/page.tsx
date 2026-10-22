@@ -1,5 +1,5 @@
-import { SaqLanding } from "@/components/saq/SaqLanding";
+import { SaqIntro } from "@/components/saq/SaqIntro";
 
 export default function SaqLandingPage() {
-  return <SaqLanding />;
+  return <SaqIntro />;
 }

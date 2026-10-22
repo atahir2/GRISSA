@@ -1,219 +1,181 @@
 /**
- * SAQ runtime persistence via Supabase.
- * Static questionnaire config remains file-based (questionnaire.data.json).
+ * Stable repository facade.
+ * Keep UI/routes importing from this module only.
  */
 
-import { createClient } from "@/src/lib/supabase/client";
+export type {
+  ActionMetadata,
+  AssessmentRepository,
+  AssessmentRuntimeRepository,
+  AssessmentVersionUpdate,
+} from "./repositories/assessment.repository.interface";
 import type {
-  AssessmentScopeSelectionRow,
-  AssessmentAnswerRow,
-  AssessmentActionItemRow,
-} from "@/src/lib/supabase/database.types";
-import type { Assessment } from "./assessment.types";
+  Assessment,
+  AssessmentAccess,
+  AssessmentAnswer,
+  AssessmentCollaborator,
+  AssessmentListItem,
+  AssessmentVersion,
+  ScopeSelection,
+} from "./assessment.types";
+import type {
+  ActionMetadata,
+  AssessmentVersionUpdate,
+} from "./repositories/assessment.repository.interface";
+import type { AssessmentRole } from "./permissions";
+import { appFetch } from "@/src/lib/base-path";
 
-import type { ScopeSelection, AssessmentAnswer } from "./assessment.types";
-
-export type ActionMetadata = {
-  effortRequired?: "Low" | "Medium" | "High";
-  leader?: string;
-  deadline?: string;
-  status?: "Planned" | "In Progress" | "Completed";
-  remarks?: string;
-};
-
-type SupabaseBrowserClient = ReturnType<typeof createClient>;
-
-async function requireSession(supabase: SupabaseBrowserClient) {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) {
-    throw new Error("Authentication required");
+async function callRepositoryApi<T>(action: string, payload?: Record<string, unknown>): Promise<T> {
+  const res = await appFetch("/api/saq/repository", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, payload }),
+  });
+  const json = (await res.json()) as { error?: string } & T;
+  if (!res.ok) {
+    throw new Error(json.error ?? "Repository request failed.");
   }
-  return user;
+  return json;
 }
 
-function rowToAssessment(row: {
-  id: string;
-  organisation_name: string;
-  created_at: string;
-  updated_at: string;
-}): Assessment {
-  return {
-    id: row.id,
-    organisationName: row.organisation_name,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  };
+export function createAssessment(organisationName: string) {
+  return callRepositoryApi<Assessment>("createAssessment", { organisationName });
 }
 
-function scopeToRow(assessmentId: string, s: ScopeSelection): Omit<AssessmentScopeSelectionRow, "id" | "created_at" | "updated_at"> {
-  return {
-    assessment_id: assessmentId,
-    scope_id: s.scopeId,
-    in_scope: s.inScope,
-    target_capability: s.targetCapability ?? null,
-  };
+export function deleteAssessment(assessmentId: string): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("deleteAssessment", { assessmentId }).then(() => undefined);
 }
 
-function rowToScope(assessmentId: string, row: AssessmentScopeSelectionRow): ScopeSelection {
-  return {
-    assessmentId,
-    scopeId: row.scope_id,
-    inScope: row.in_scope,
-    targetCapability: row.target_capability as 1 | 2 | 3 | undefined,
-  };
+export function getAssessmentById(assessmentId: string): Promise<Assessment | null> {
+  return callRepositoryApi<Assessment | null>("getAssessmentById", { assessmentId });
 }
 
-function answerToRow(assessmentId: string, a: AssessmentAnswer): Omit<AssessmentAnswerRow, "id" | "created_at" | "updated_at"> {
-  return {
-    assessment_id: assessmentId,
-    question_id: a.questionId,
-    selected_score: a.selectedScore ?? null,
-  };
+export function listAssessments(): Promise<AssessmentListItem[]> {
+  return callRepositoryApi<AssessmentListItem[]>("listAssessments");
 }
 
-function rowToAnswer(assessmentId: string, row: AssessmentAnswerRow): AssessmentAnswer {
-  return {
-    assessmentId,
-    questionId: row.question_id,
-    selectedScore: row.selected_score as 1 | 2 | 3 | undefined,
-  };
-}
-
-export async function createAssessment(organisationName: string): Promise<Assessment> {
-  const supabase = createClient();
-  const user = await requireSession(supabase);
-  const { data, error } = await supabase
-    .from("assessments")
-    .insert({ organisation_name: organisationName, owner_user_id: user.id })
-    .select("id, organisation_name, created_at, updated_at")
-    .single();
-  if (error) throw new Error(error.message);
-  return rowToAssessment(data);
-}
-
-export async function getAssessmentById(assessmentId: string): Promise<Assessment | null> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const { data, error } = await supabase
-    .from("assessments")
-    .select("id, organisation_name, created_at, updated_at")
-    .eq("id", assessmentId)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data ? rowToAssessment(data) : null;
-}
-
-export async function listAssessments(): Promise<Assessment[]> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
-
-  const { data, error } = await supabase
-    .from("assessments")
-    .select("id, organisation_name, created_at, updated_at")
-    .order("updated_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(rowToAssessment);
-}
-
-export async function saveScopeSelections(
+export function saveScopeSelections(
   assessmentId: string,
+  versionId: string,
   scopeSelections: ScopeSelection[]
 ): Promise<void> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const rows = scopeSelections.map((s) => scopeToRow(assessmentId, s));
-  const { error } = await supabase.from("assessment_scope_selections").upsert(rows, {
-    onConflict: "assessment_id,scope_id",
-  });
-  if (error) throw new Error(error.message);
-  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", assessmentId);
+  return callRepositoryApi<{ ok: true }>("saveScopeSelections", {
+    assessmentId,
+    versionId,
+    scopeSelections,
+  }).then(() => undefined);
 }
 
-export async function loadScopeSelections(assessmentId: string): Promise<ScopeSelection[]> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const { data, error } = await supabase
-    .from("assessment_scope_selections")
-    .select("*")
-    .eq("assessment_id", assessmentId);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row) => rowToScope(assessmentId, row as AssessmentScopeSelectionRow));
+export function loadScopeSelections(assessmentId: string, versionId: string): Promise<ScopeSelection[]> {
+  return callRepositoryApi<ScopeSelection[]>("loadScopeSelections", { assessmentId, versionId });
 }
 
-export async function saveAnswers(
+export function saveAnswers(
   assessmentId: string,
+  versionId: string,
   answers: AssessmentAnswer[]
 ): Promise<void> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const rows = answers.map((a) => answerToRow(assessmentId, a));
-  const { error } = await supabase.from("assessment_answers").upsert(rows, {
-    onConflict: "assessment_id,question_id",
-  });
-  if (error) throw new Error(error.message);
-  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", assessmentId);
+  return callRepositoryApi<{ ok: true }>("saveAnswers", { assessmentId, versionId, answers }).then(
+    () => undefined
+  );
 }
 
-export async function loadAnswers(assessmentId: string): Promise<AssessmentAnswer[]> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const { data, error } = await supabase
-    .from("assessment_answers")
-    .select("*")
-    .eq("assessment_id", assessmentId);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row) => rowToAnswer(assessmentId, row as AssessmentAnswerRow));
+export function loadAnswers(assessmentId: string, versionId: string): Promise<AssessmentAnswer[]> {
+  return callRepositoryApi<AssessmentAnswer[]>("loadAnswers", { assessmentId, versionId });
 }
 
-export async function saveActionMetadata(
+export function saveActionMetadata(
   assessmentId: string,
+  versionId: string,
   actionMetadataByQuestionId: Record<string, ActionMetadata>
 ): Promise<void> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const rows = Object.entries(actionMetadataByQuestionId).map(([question_id, m]) => ({
-    assessment_id: assessmentId,
-    question_id,
-    effort_required: m.effortRequired ?? null,
-    leader: m.leader ?? null,
-    deadline: m.deadline ?? null,
-    status: m.status ?? null,
-    remarks: m.remarks ?? null,
-  }));
-  if (rows.length === 0) return;
-  const { error } = await supabase.from("assessment_action_items").upsert(rows, {
-    onConflict: "assessment_id,question_id",
-  });
-  if (error) throw new Error(error.message);
-  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", assessmentId);
+  return callRepositoryApi<{ ok: true }>("saveActionMetadata", {
+    assessmentId,
+    versionId,
+    actionMetadataByQuestionId,
+  }).then(() => undefined);
 }
 
-export async function loadActionMetadata(
-  assessmentId: string
+export function loadActionMetadata(
+  assessmentId: string,
+  versionId: string
 ): Promise<Record<string, ActionMetadata>> {
-  const supabase = createClient();
-  await requireSession(supabase);
-  const { data, error } = await supabase
-    .from("assessment_action_items")
-    .select("*")
-    .eq("assessment_id", assessmentId);
-  if (error) throw new Error(error.message);
-  const out: Record<string, ActionMetadata> = {};
-  for (const row of data ?? []) {
-    const r = row as AssessmentActionItemRow;
-    out[r.question_id] = {
-      effortRequired: r.effort_required as ActionMetadata["effortRequired"],
-      leader: r.leader ?? undefined,
-      deadline: r.deadline ?? undefined,
-      status: r.status as ActionMetadata["status"],
-      remarks: r.remarks ?? undefined,
-    };
-  }
-  return out;
+  return callRepositoryApi<Record<string, ActionMetadata>>("loadActionMetadata", {
+    assessmentId,
+    versionId,
+  });
+}
+
+export function getAssessmentAccess(assessmentId: string): Promise<AssessmentAccess | null> {
+  return callRepositoryApi<AssessmentAccess | null>("getAssessmentAccess", { assessmentId });
+}
+
+export function listAssessmentVersions(assessmentId: string): Promise<AssessmentVersion[]> {
+  return callRepositoryApi<AssessmentVersion[]>("listAssessmentVersions", { assessmentId });
+}
+
+export function getLatestAssessmentVersion(assessmentId: string): Promise<AssessmentVersion | null> {
+  return callRepositoryApi<AssessmentVersion | null>("getLatestAssessmentVersion", { assessmentId });
+}
+
+export function getAssessmentVersion(
+  assessmentId: string,
+  versionId: string
+): Promise<AssessmentVersion | null> {
+  return callRepositoryApi<AssessmentVersion | null>("getAssessmentVersion", {
+    assessmentId,
+    versionId,
+  });
+}
+
+export function createAssessmentVersion(
+  assessmentId: string,
+  label?: string | null
+): Promise<AssessmentVersion> {
+  return callRepositoryApi<AssessmentVersion>("createAssessmentVersion", { assessmentId, label });
+}
+
+export function updateAssessmentVersion(
+  assessmentId: string,
+  versionId: string,
+  patch: AssessmentVersionUpdate
+): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("updateAssessmentVersion", {
+    assessmentId,
+    versionId,
+    patch,
+  }).then(() => undefined);
+}
+
+export function listAssessmentCollaborators(assessmentId: string): Promise<AssessmentCollaborator[]> {
+  return callRepositoryApi<AssessmentCollaborator[]>("listAssessmentCollaborators", { assessmentId });
+}
+
+export function addCollaboratorByEmail(
+  assessmentId: string,
+  email: string,
+  role: Exclude<AssessmentRole, "owner">
+): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("addCollaboratorByEmail", { assessmentId, email, role }).then(
+    () => undefined
+  );
+}
+
+export function updateCollaboratorRole(
+  assessmentId: string,
+  collaboratorRowId: string,
+  role: Exclude<AssessmentRole, "owner">
+): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("updateCollaboratorRole", {
+    assessmentId,
+    collaboratorRowId,
+    role,
+  }).then(() => undefined);
+}
+
+export function removeCollaborator(assessmentId: string, collaboratorRowId: string): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("removeCollaborator", {
+    assessmentId,
+    collaboratorRowId,
+  }).then(() => undefined);
 }

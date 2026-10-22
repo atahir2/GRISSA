@@ -3,41 +3,53 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/src/lib/supabase/client";
+import { signIn, useSession } from "next-auth/react";
 import { safeNextPath } from "@/src/lib/auth/safe-redirect";
+import { formatAuthErrorMessage } from "@/src/lib/auth/auth-errors";
 
 interface LoginFormProps {
   nextPath?: string;
+  /** Set when redirecting from /auth/callback with a failed auth exchange */
+  initialAuthError?: string;
+  initialInfo?: string;
 }
 
-export function LoginForm({ nextPath }: LoginFormProps) {
+export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginFormProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info] = useState<string | null>(initialInfo ?? null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.replace(safeNextPath(nextPath));
-      }
-    });
-  }, [nextPath, router]);
+    if (!initialAuthError) return;
+    try {
+      setError(formatAuthErrorMessage(decodeURIComponent(initialAuthError)));
+    } catch {
+      setError(formatAuthErrorMessage(initialAuthError));
+    }
+  }, [initialAuthError]);
+
+  useEffect(() => {
+    if (session) router.replace(safeNextPath(nextPath));
+  }, [nextPath, router, session]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const result = await signIn("credentials", {
         email: email.trim(),
         password,
+        redirect: false,
       });
-      if (signInError) {
-        setError(signInError.message);
+      if (result?.error) {
+        setError(
+          formatAuthErrorMessage(result.error ?? "Sign in failed. Please check your credentials.")
+        );
         return;
       }
       router.push(safeNextPath(nextPath));
@@ -86,6 +98,11 @@ export function LoginForm({ nextPath }: LoginFormProps) {
           {error && (
             <p className="text-sm text-red-600" role="alert">
               {error}
+            </p>
+          )}
+          {info && (
+            <p className="text-sm text-emerald-800" role="status">
+              {info}
             </p>
           )}
           <button

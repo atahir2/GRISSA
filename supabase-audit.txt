@@ -1,0 +1,107 @@
+﻿===== SUPABASE DEPENDENCY AUDIT =====
+Generated: 04/02/2026 12:45:10
+
+--- FILES USING SUPABASE ---
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\middleware.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\next.config.js
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\app\auth\callback\route.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\components\auth\LoginForm.tsx
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\components\auth\SignupForm.tsx
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\components\saq\SaqLanding.tsx
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\auth\auth-errors.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\auth\site-url.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\saq\assessment.repository.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\saq\createAssessmentAction.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\supabase\client.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\supabase\middleware.ts
+Z:\_Re$E@rCh\UvA\Work\Project_GreenDIGIT\GD_Work Packages (WPs)\WP9_T9.3\saq-web-tool v2\src\lib\supabase\server.ts
+
+--- AUTH USAGES ---
+
+src\app\auth\callback\route.ts:24:    const { error } = await supabase.auth.exchangeCodeForSession(code);
+src\components\auth\LoginForm.tsx:34:    supabase.auth.getSession().then(({ data: { session } }) => {
+src\components\auth\LoginForm.tsx:47:      const { error: signInError } = await supabase.auth.signInWithPassword({
+src\components\auth\SignupForm.tsx:22:    supabase.auth.getSession().then(({ data: { session } }) => {
+src\components\auth\SignupForm.tsx:47:      const { data, error: signUpError } = await supabase.auth.signUp({
+src\components\saq\SaqLanding.tsx:37:    supabase.auth.getSession().then(({ data: { session: s } }) => {
+src\components\saq\SaqLanding.tsx:43:    } = supabase.auth.onAuthStateChange((_event, s) => {
+src\components\saq\SaqLanding.tsx:59:      const { error } = await supabase.auth.exchangeCodeForSession(code);
+src\components\saq\SaqLanding.tsx:102:      await supabase.auth.signOut();
+src\lib\saq\assessment.repository.ts:48:  } = await supabase.auth.getUser();
+src\lib\saq\assessment.repository.ts:174:  await supabase.auth.getSession();
+src\lib\saq\assessment.repository.ts:206:  } = await supabase.auth.getUser();
+src\lib\saq\createAssessmentAction.ts:35:  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+src\lib\saq\createAssessmentAction.ts:44:  const { error: setErr } = await supabase.auth.setSession({
+middleware.ts:15:  } = await supabase.auth.getUser();
+
+
+
+--- DATABASE USAGES ---
+
+src\components\saq\AssessmentReport.tsx:466:                {Array.from(actionItemsByTheme.entries())
+src\components\saq\AssessmentReportPDF.tsx:368:  const sortedThemes = Array.from(actionItemsByTheme.entries()).sort((a, b) =>
+src\lib\saq\assessment.repository.ts:134:    .from("assessments")
+src\lib\saq\assessment.repository.ts:146:      .from("assessment_collaborators")
+src\lib\saq\assessment.repository.ts:176:    .from("assessments")
+src\lib\saq\assessment.repository.ts:182:  const { error: collabError } = await supabase.from("assessment_collaborators").insert({
+src\lib\saq\assessment.repository.ts:190:  const { error: verError } = await supabase.from("assessment_versions").insert({
+src\lib\saq\assessment.repository.ts:209:  const { data, error } = await supabase.rpc("list_my_assessments");
+src\lib\saq\assessment.repository.ts:256:    .from("assessment_versions")
+src\lib\saq\assessment.repository.ts:270:    .from("assessment_versions")
+src\lib\saq\assessment.repository.ts:282:    .from("assessment_versions")
+src\lib\saq\assessment.repository.ts:300:    .from("assessment_versions")
+src\lib\saq\assessment.repository.ts:330:    .from("assessment_versions")
+src\lib\saq\assessment.repository.ts:346:    .from("assessment_scope_selections")
+src\lib\saq\assessment.repository.ts:362:    const { error: insScope } = await 
+supabase.from("assessment_scope_selections").insert(inserts);
+src\lib\saq\assessment.repository.ts:367:    .from("assessment_answers")
+src\lib\saq\assessment.repository.ts:382:    const { error: insAns } = await supabase.from("assessment_answers").insert(inserts);
+src\lib\saq\assessment.repository.ts:387:    .from("assessment_action_items")
+src\lib\saq\assessment.repository.ts:406:    const { error: insAct } = await supabase.from("assessment_action_items").insert(inserts);
+src\lib\saq\assessment.repository.ts:410:  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", 
+assessmentId);
+src\lib\saq\assessment.repository.ts:436:    .from("assessment_versions")
+src\lib\saq\assessment.repository.ts:441:  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", 
+assessmentId);
+src\lib\saq\assessment.repository.ts:454:  const { error } = await supabase.from("assessment_scope_selections").upsert(rows, {
+src\lib\saq\assessment.repository.ts:458:  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", 
+assessmentId);
+src\lib\saq\assessment.repository.ts:470:    .from("assessment_scope_selections")
+src\lib\saq\assessment.repository.ts:488:  const { error } = await supabase.from("assessment_answers").upsert(rows, {
+src\lib\saq\assessment.repository.ts:492:  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", 
+assessmentId);
+src\lib\saq\assessment.repository.ts:501:    .from("assessment_answers")
+src\lib\saq\assessment.repository.ts:529:  const { error } = await supabase.from("assessment_action_items").upsert(rows, {
+src\lib\saq\assessment.repository.ts:533:  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", 
+assessmentId);
+src\lib\saq\assessment.repository.ts:545:    .from("assessment_action_items")
+src\lib\saq\assessment.repository.ts:567:  const { data, error } = await supabase.rpc("list_assessment_collaborators", {
+src\lib\saq\assessment.repository.ts:601:  const { error } = await supabase.rpc("add_assessment_collaborator_by_email", {
+src\lib\saq\assessment.repository.ts:620:    .from("assessment_collaborators")
+src\lib\saq\assessment.repository.ts:634:    .from("assessment_collaborators")
+src\lib\saq\createAssessmentAction.ts:52:  const { data: rpcData, error: rpcError } = await supabase.rpc("create_assessment_bundle", {
+
+
+
+--- STORAGE USAGES ---
+
+--- REALTIME USAGES ---
+
+--- EDGE FUNCTIONS ---
+
+--- ENV VARIABLES ---
+
+.env.local:1:# Supabase (SAQ persistence)
+.env.local:2:NEXT_PUBLIC_SUPABASE_URL=https://daywezdxcipvzggrtfmn.supabase.co
+.env.local:3:NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRheXdlemR4Y2lwdnpnZ3J0Zm
+1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTAwNzIsImV4cCI6MjA4ODcyNjA3Mn0.5n9WpwQSXM4SoB2vPFyKq0yqx75kPQAwTSM2ggow_hI
+
+
+
+--- PACKAGE DEPENDENCIES ---
+
+package.json:14:    "@supabase/ssr": "^0.5.2",
+
+
+
+===== AUDIT COMPLETE =====

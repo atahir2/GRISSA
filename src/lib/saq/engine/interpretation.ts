@@ -25,7 +25,7 @@ export interface AssessmentInterpretation {
   strategicRecommendations: string[];
 }
 
-function computeReadinessLevel(results: AssessmentResults, actionPlan: ActionPlan): ReadinessLevel {
+function computeReadinessLevel(results: AssessmentResults): ReadinessLevel {
   const s = results.summary;
   const completion = s.completionRate;
   const high = s.highPriorityCount;
@@ -207,7 +207,7 @@ export function buildAssessmentInterpretation(
   results: AssessmentResults,
   actionPlan: ActionPlan
 ): AssessmentInterpretation {
-  const readinessLevel = computeReadinessLevel(results, actionPlan);
+  const readinessLevel = computeReadinessLevel(results);
   const summary = buildSummary(readinessLevel, results);
   const strengths = pickThemeStrengths(results.themeResults);
   const improvementAreas = pickImprovementAreas(results.themeResults);
