@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { appFetch } from "@/src/lib/base-path";
 import { listAssessments } from "@/src/lib/saq/assessment.repository";
 import { createAssessmentAction } from "@/src/lib/saq/createAssessmentAction";
 import type { AssessmentListItem } from "@/src/lib/saq/assessment.types";
@@ -9,6 +10,7 @@ import { AssessmentListCard } from "./AssessmentListCard";
 import { EmptyAssessmentsState } from "./EmptyAssessmentsState";
 import { canCreateAssessmentVersion, canManageCollaborators } from "@/src/lib/saq/permissions";
 import { GrissaPageHeader } from "./GrissaPageHeader";
+import { StandardsPortal } from "./StandardsPortal";
 
 export function SaqLanding() {
   const router = useRouter();
@@ -16,6 +18,8 @@ export function SaqLanding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [orgName, setOrgName] = useState("");
+  const [orgTouched, setOrgTouched] = useState(false);
+  const [profileIndustry, setProfileIndustry] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -39,6 +43,25 @@ export function SaqLanding() {
   }, []);
 
   useEffect(() => loadAssessments(), [loadAssessments]);
+
+  useEffect(() => {
+    let cancelled = false;
+    appFetch("/api/auth/profile")
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as { organisationName?: string; industry?: string };
+      })
+      .then((profile) => {
+        if (cancelled || !profile) return;
+        const name = profile.organisationName?.trim();
+        if (name) setOrgName((current) => (orgTouched ? current : name));
+        if (profile.industry) setProfileIndustry(profile.industry);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [orgTouched]);
 
   async function handleNewAssessment(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +88,8 @@ export function SaqLanding() {
           description="Create, resume, review, and manage assessment runs across your organisation."
         />
 
+        <StandardsPortal initialIndustry={profileIndustry} />
+
         <>
             <section className="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="new-assessment-heading">
               <h2 id="new-assessment-heading" className="text-xl font-semibold text-slate-900">
@@ -85,7 +110,10 @@ export function SaqLanding() {
                     id="org-name"
                     type="text"
                     value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
+                    onChange={(e) => {
+                      setOrgTouched(true);
+                      setOrgName(e.target.value);
+                    }}
                     placeholder="e.g. My Research Infrastructure"
                     className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     required

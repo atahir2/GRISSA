@@ -25,8 +25,7 @@ function descriptionForScore(
   answerOptions: Pick<AnswerOption, "score" | "description">[],
   score: CapabilityScore,
 ): string | undefined {
-  const opt = answerOptions.find((o) => o.score === score);
-  const text = opt?.description?.trim();
+  const text = answerOptions.find((option) => option.score === score)?.description?.trim();
   return text && text.length > 0 ? text : undefined;
 }
 
@@ -55,7 +54,7 @@ export function CapabilitySelector({
         {label}
       </span>
       <div className="flex shrink-0 flex-nowrap items-center justify-end gap-2">
-        {LEVELS.map(({ score, label: l }) => {
+        {LEVELS.map(({ score, label: levelLabel }) => {
           const isSelected = value === score;
           const levelDesc = descriptionForScore(answerOptions, score);
           return (
@@ -73,7 +72,7 @@ export function CapabilitySelector({
                     : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"
               }`}
             >
-              {l}
+              {levelLabel}
             </button>
           );
         })}
@@ -83,9 +82,7 @@ export function CapabilitySelector({
       </div>
       {value !== undefined && (
         <div className="mt-2 w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-left text-xs text-slate-700">
-          <p className="text-slate-700">
-            {selectedDescription ?? "No description available for this level."}
-          </p>
+          <p>{selectedDescription ?? "No description available for this level."}</p>
         </div>
       )}
     </div>

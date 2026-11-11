@@ -17,6 +17,22 @@ import type { ActionPlan } from "./actions";
 
 export type ReadinessLevel = "Early" | "Developing" | "Advanced";
 
+/** Theme bar used on the dashboard, report, and live questionnaire. */
+export function themeReadinessFromCounts(input: {
+  completionRate: number;
+  highPriorityCount: number;
+  mediumPriorityCount: number;
+  lowPriorityCount: number;
+}): { score: number; level: ReadinessLevel } {
+  const totalPriority =
+    input.highPriorityCount + input.mediumPriorityCount + input.lowPriorityCount || 1;
+  const highShare = input.highPriorityCount / totalPriority;
+  const scoreRaw = 0.7 * input.completionRate + 0.3 * (100 - highShare * 100);
+  const score = Math.max(0, Math.min(100, Math.round(scoreRaw)));
+  const level: ReadinessLevel = score < 40 ? "Early" : score < 70 ? "Developing" : "Advanced";
+  return { score, level };
+}
+
 export interface AssessmentInterpretation {
   readinessLevel: ReadinessLevel;
   summary: string;

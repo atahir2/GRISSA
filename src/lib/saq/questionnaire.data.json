@@ -234,10 +234,39 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "CSRD, ESRS E1-E5,  ESPR, EED, WEEE, LCA, ISO14040, ISO14044",
+      "evidenceExpected": "Compliance documentation / Legal review",
+      "whyItMatters": "This shows whether the research infrastructure knows which EU environmental rules apply to its work and has turned them into owned procedures.",
+      "commonEvidence": [
+        {
+          "text": "A working list of regulations the research infrastructure has started to review.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A map of applicable regulations with a named owner for each one.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "Policies or procedures that include those regulatory requirements.",
+          "supportsLevel": 3
+        }
+      ],
+      "standardClauses": [
+        { "standardId": "csrd" },
+        { "standardId": "esrs", "clause": "E1–E5" },
+        { "standardId": "eed" },
+        { "standardId": "espr" },
+        { "standardId": "weee" },
+        { "standardId": "iso-14040", "clause": "ISO 14040 and ISO 14044" }
+      ],
+      "policyCategories": ["Regulatory compliance"],
+      "reportingRequirements": [
+        "Environmental disclosures under ESRS, where CSRD applies to the organisation."
+      ],
       "answerOptions": [
         {
           "score": 1,
           "description": "The RI is not actively considering EU environmental regulations or is unaware of specific obligations.",
+          "levelInPractice": "Day to day, no one can name the rules that apply, and they are not part of how work is planned.",
           "impactMagnitude": "High",
           "impactLikelihood": "High",
           "recommendedAction": "Conduct a regulatory gap analysis to identify which EU environmental regulations apply and where the RI is currently non-compliant. Engage legal or compliance expertise to support interpretation if needed."
@@ -245,6 +274,7 @@
         {
           "score": 2,
           "description": "The RI is aware of applicable regulations and has initiated some exploratory or preparatory activities, but there is no structured compliance plan.",
+          "levelInPractice": "Someone has started to look at the rules, but there is no plan with owners and dates.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "Medium",
           "recommendedAction": "Update internal documentation and procedures to close identified regulatory gaps. Begin implementing key compliance actions with clear timelines and responsibilities."
@@ -252,6 +282,7 @@
         {
           "score": 3,
           "description": "The RI has mapped relevant regulations, assigned responsibilities, and embedded compliance requirements into formal policies and operational procedures.",
+          "levelInPractice": "Applicable rules are listed, people are assigned, and the requirements sit in policies and operating procedures.",
           "impactMagnitude": "Low",
           "impactLikelihood": "Low",
           "recommendedAction": "No further action required. Maintain alignment by reviewing regulatory changes annually and updating internal policies accordingly."
@@ -268,10 +299,34 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "CSRD, ESRS E1-E5, ESPR, WEEE",
+      "evidenceExpected": "Gap analysis / Internal review documentation",
+      "whyItMatters": "A written review is how the research infrastructure decides which rules apply and which obligations are still open.",
+      "commonEvidence": [
+        {
+          "text": "A gap note that names applicable rules and at least one open gap.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A dated gap analysis with an owner for each open item.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that the analysis was reviewed again after a change in the rules or in the research infrastructure.",
+          "supportsLevel": 3
+        }
+      ],
+      "standardClauses": [
+        { "standardId": "csrd" },
+        { "standardId": "esrs", "clause": "E1–E5" },
+        { "standardId": "espr" },
+        { "standardId": "weee" }
+      ],
+      "policyCategories": ["Regulatory compliance"],
       "answerOptions": [
         {
           "score": 1,
           "description": "No structured review or gap analysis has been conducted; awareness of obligations is minimal or outdated.",
+          "levelInPractice": "There is no written review, so obligations are guessed or left outdated.",
           "impactMagnitude": "High",
           "impactLikelihood": "High",
           "recommendedAction": "Initiate a structured regulatory review to identify applicable EU regulations (e.g. CSRD, ESRS, EED, ESPR, WEEE). Engage relevant internal or external expertise and document initial findings."
@@ -279,6 +334,7 @@
         {
           "score": 2,
           "description": "A basic review has been done; some gaps identified, but follow-up actions are limited or informal.",
+          "levelInPractice": "A first review names some gaps, and follow-up is still informal.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "Medium",
           "recommendedAction": "Expand and update the regulatory gap analysis. Clarify which obligations are partially addressed, and prepare an action plan to resolve any gaps identified."
@@ -286,6 +342,7 @@
         {
           "score": 3,
           "description": "A comprehensive, up-to-date gap analysis is in place; regularly reviewed and informs compliance actions.",
+          "levelInPractice": "The review is current, repeated, and used to decide the compliance work.",
           "impactMagnitude": "Low",
           "impactLikelihood": "Low",
           "recommendedAction": "No action needed. Maintain and periodically update the gap analysis in line with evolving legislation and internal priorities."
@@ -302,10 +359,32 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ESRS E1, ISO 14001",
+      "evidenceExpected": "Strategy document / Policy endorsement",
+      "whyItMatters": "A documented strategy is how leadership states environmental priorities and connects them to planning.",
+      "commonEvidence": [
+        {
+          "text": "A strategy document that states environmental goals and priorities.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A leadership endorsement, such as a signed copy or a meeting minute.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A review date and a link from the strategy into operational planning.",
+          "supportsLevel": 3
+        }
+      ],
+      "standardClauses": [
+        { "standardId": "esrs", "clause": "E1" },
+        { "standardId": "iso-14001" }
+      ],
+      "policyCategories": ["Environmental strategy"],
       "answerOptions": [
         {
           "score": 1,
           "description": "No environmental sustainability strategy exists, or it is informal and not institutionally endorsed.",
+          "levelInPractice": "There is no written strategy, or leadership has not endorsed it.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "High",
           "recommendedAction": "Draft a documented environmental sustainability strategy that outlines goals, scope, and key priorities. Secure leadership engagement to initiate endorsement."
@@ -313,6 +392,7 @@
         {
           "score": 2,
           "description": "A strategy exists and covers key areas, but it is not comprehensive or regularly reviewed.",
+          "levelInPractice": "A strategy covers the main topics, but it is not reviewed on a set cycle.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "Medium",
           "recommendedAction": "Formalise leadership endorsement of the strategy and ensure it includes a mechanism for periodic updates. Begin integrating it into RI-level decision-making."
@@ -320,6 +400,7 @@
         {
           "score": 3,
           "description": "A formal strategy is in place, endorsed by leadership, reviewed regularly, and linked to operational planning.",
+          "levelInPractice": "Leadership has endorsed the strategy, it is reviewed, and operational planning uses it.",
           "impactMagnitude": "Low",
           "impactLikelihood": "Low",
           "recommendedAction": "No action needed. Maintain periodic reviews and ensure the strategy remains aligned with evolving sustainability goals and regulations."
@@ -336,10 +417,32 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14001, CSRD",
+      "evidenceExpected": "Organisational documentation",
+      "whyItMatters": "Named roles make it clear who carries environmental work across the research infrastructure.",
+      "commonEvidence": [
+        {
+          "text": "A note that names people for sustainability tasks.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Role descriptions or an organisation chart that includes those responsibilities.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A procedure that states who does the environmental work.",
+          "supportsLevel": 3
+        }
+      ],
+      "standardClauses": [
+        { "standardId": "iso-14001" },
+        { "standardId": "csrd" }
+      ],
+      "policyCategories": ["Roles and responsibilities"],
       "answerOptions": [
         {
           "score": 1,
           "description": "No roles or responsibilities are defined for sustainability-related actions.",
+          "levelInPractice": "No function is responsible for environmental sustainability.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "High",
           "recommendedAction": "Identify key functions and assign clear responsibilities for environmental sustainability. Ensure responsibility is not siloed but shared across operational and strategic roles."
@@ -347,6 +450,7 @@
         {
           "score": 2,
           "description": "Some roles are assigned, but responsibilities are not clearly documented or consistently applied.",
+          "levelInPractice": "Some people are named, but the assignment is not written down or applied the same way each time.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "Medium",
           "recommendedAction": "Document the assigned responsibilities formally (e.g. in organisational charts, role descriptions, quality systems) and ensure they are communicated internally."
@@ -354,6 +458,7 @@
         {
           "score": 3,
           "description": "Roles and responsibilities are formally assigned, documented, and integrated into operational procedures.",
+          "levelInPractice": "Roles are written into procedures and updated when the organisation changes.",
           "impactMagnitude": "Low",
           "impactLikelihood": "Low",
           "recommendedAction": "No action needed. Sustain clarity and alignment of responsibilities, and update assignments when organisational roles or sustainability goals evolve."
@@ -370,10 +475,33 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14001, CSRD, EMAS",
+      "evidenceExpected": "Policy / Management system records",
+      "whyItMatters": "Policies and quality systems are where environmental sustainability becomes part of how the research infrastructure already works.",
+      "commonEvidence": [
+        {
+          "text": "A policy that mentions environmental sustainability.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Updated policies or procedures across the functions that carry the work.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "An environmental management or quality system that includes those requirements.",
+          "supportsLevel": 3
+        }
+      ],
+      "standardClauses": [
+        { "standardId": "iso-14001" },
+        { "standardId": "emas" },
+        { "standardId": "csrd" }
+      ],
+      "policyCategories": ["Environmental management"],
       "answerOptions": [
         {
           "score": 1,
           "description": "Environmental considerations are not referenced in internal policies or management systems.",
+          "levelInPractice": "Internal policies and management systems do not mention the environment.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "High",
           "recommendedAction": "Review existing policies, management systems, and quality frameworks to identify where environmental sustainability is absent. Begin drafting updates or addenda that reflect sustainability considerations."
@@ -381,6 +509,7 @@
         {
           "score": 2,
           "description": "Sustainability is mentioned in some policies or quality processes, but integration is limited or inconsistent.",
+          "levelInPractice": "Some documents mention sustainability, and coverage is uneven.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "Medium",
           "recommendedAction": "Expand integration of sustainability elements across internal systems. Ensure alignment with recognised frameworks such as ISO 14001 or ISO 9001 (with sustainability add-ons), and involve relevant departments in updates."
@@ -388,6 +517,7 @@
         {
           "score": 3,
           "description": "Environmental sustainability is systematically integrated across internal policies, quality management, and procedures.",
+          "levelInPractice": "Policies, quality management, and procedures include environmental requirements in a consistent way.",
           "impactMagnitude": "Low",
           "impactLikelihood": "Low",
           "recommendedAction": "No action needed. Continue internal reviews to maintain full integration and alignment with emerging sustainability standards."
@@ -404,10 +534,36 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "% of suppliers evaluated with environmental criteria (optional)",
       "reference": "ISO 20400, ESRS G1, ESRS E5, EU Green Public Procurement Guidelines",
+      "evidenceExpected": "Procurement documents / Supplier criteria",
+      "whyItMatters": "Procurement is where environmental criteria enter the goods and services the research infrastructure buys.",
+      "commonEvidence": [
+        {
+          "text": "A tender or supplier form with at least one environmental criterion.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Procurement guidance that states the environmental criteria.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "Supplier assessments that apply those criteria across purchase categories.",
+          "supportsLevel": 3
+        }
+      ],
+      "standardClauses": [
+        { "standardId": "iso-20400" },
+        { "standardId": "gpp" },
+        { "standardId": "esrs", "clause": "G1 and E5" }
+      ],
+      "policyCategories": ["Sustainable procurement"],
+      "reportingRequirements": [
+        "Share of suppliers evaluated with environmental criteria, where the research infrastructure tracks that figure."
+      ],
       "answerOptions": [
         {
           "score": 1,
           "description": "Environmental criteria are not considered in procurement or supplier evaluation.",
+          "levelInPractice": "Tenders and supplier checks do not use environmental criteria.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "High",
           "recommendedAction": "Begin integrating basic environmental sustainability criteria into procurement guidelines and supplier selection processes. Reference relevant standards (e.g. EU Green Public Procurement) where applicable."
@@ -415,6 +571,7 @@
         {
           "score": 2,
           "description": "Some environmental criteria are used, but not systematically or across all procurement categories.",
+          "levelInPractice": "Some purchases use environmental criteria, but not every category.",
           "impactMagnitude": "Medium",
           "impactLikelihood": "Medium",
           "recommendedAction": "Expand and formalise sustainability criteria in procurement documents and supplier contracts. Ensure criteria are measurable and consistently applied across purchases."
@@ -422,6 +579,7 @@
         {
           "score": 3,
           "description": "Environmental sustainability is consistently integrated into procurement processes and supplier assessments.",
+          "levelInPractice": "Criteria are written into procurement and supplier assessment and applied consistently.",
           "impactMagnitude": "Low",
           "impactLikelihood": "Low",
           "recommendedAction": "No action needed. Maintain criteria updates and consider supplier engagement strategies to support continuous sustainability improvement."
@@ -438,6 +596,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "% of staff trained annually, number of training sessions",
       "reference": "ISO 14001, ESRS",
+      "evidenceExpected": "Training records, attendance logs, course materials",
+      "commonEvidence": [
+        {
+          "text": "A training record for at least one sustainability awareness session.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Attendance logs that name the staff who took part.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "Role-specific course materials, with a date for the next session.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -472,6 +645,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14001, ESRS 1",
+      "evidenceExpected": "Meeting records, consultation summaries, stakeholder input reports",
+      "commonEvidence": [
+        {
+          "text": "A meeting record that includes stakeholder views on an environmental topic.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A consultation summary used in sustainability planning or goal-setting.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A stakeholder input report that is repeated and shows how the views were used.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -506,6 +694,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "Frequency and scope of communications (e.g., reports/year)",
       "reference": "CSRD, ESRS E1, ISO 14063",
+      "evidenceExpected": "Sustainability reports, public disclosures, stakeholder briefings",
+      "commonEvidence": [
+        {
+          "text": "A note or briefing that shares an environmental result, action, or goal.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A sustainability report or public disclosure issued on a set cycle.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A stakeholder briefing that covers performance, actions, and goals in a set format.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -540,6 +743,21 @@
       "environmentalDimension": "Energy",
       "associatedMetric": "% of energy from renewable sources",
       "reference": "ISO 50001, ESRS E1, EU Renewable Energy Directive",
+      "evidenceExpected": "Energy bills, supplier contracts, renewable energy certificates",
+      "commonEvidence": [
+        {
+          "text": "An energy bill or supplier note that shows some renewable supply.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A supplier contract that states the renewable share.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "Renewable energy certificates, or another formal record, that verify that share.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -574,6 +792,21 @@
       "environmentalDimension": "Energy",
       "associatedMetric": "Estimated energy savings (%) from AI/automation",
       "reference": "ISO 50001, EN 50600-4-8 (Energy Reuse)",
+      "evidenceExpected": "System documentation, control software descriptions, performance reports",
+      "commonEvidence": [
+        {
+          "text": "System documentation for one automation or AI control that changes energy use in compute or cooling.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A description of the control software and where it is used across operations.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A performance report that shows the energy saved and is reviewed.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -608,6 +841,21 @@
       "environmentalDimension": "Energy",
       "associatedMetric": "Energy reuse factor (ERF), % of recovered heat reused",
       "reference": "EN 50600-4-6, ISO 50001",
+      "evidenceExpected": "Technical system designs, energy recovery logs, reuse feasibility studies",
+      "commonEvidence": [
+        {
+          "text": "A feasibility note or design that identifies one place where waste heat can be reused.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A technical design for a heat recovery system that is in use.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "An energy recovery log that records how much heat is reused.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -642,6 +890,21 @@
       "environmentalDimension": "Energy",
       "associatedMetric": "Power Usage Effectiveness (PUE)",
       "reference": "ISO/IEC 30134-2, EN 50600-4-2, EU CoC on Data Centre Energy Efficiency",
+      "evidenceExpected": "Energy monitoring reports, PUE trend data, internal benchmarking documentation",
+      "commonEvidence": [
+        {
+          "text": "An energy monitoring report that states a Power Usage Effectiveness figure.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "PUE trend data that is updated on a set cycle.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "Internal benchmarking that compares the figure with a target and records a change made because of it.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -676,6 +939,21 @@
       "environmentalDimension": "Climate Change",
       "associatedMetric": "Carbon Usage Effectiveness (CUE)",
       "reference": "ISO/IEC 30134-3, GHG Protocol Scope 2 Guidance",
+      "evidenceExpected": "Carbon accounting reports, CUE calculations, emissions monitoring records",
+      "commonEvidence": [
+        {
+          "text": "A carbon calculation or emissions record that estimates Carbon Usage Effectiveness.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A Carbon Usage Effectiveness calculation that is repeated and included in a carbon accounting report.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that the figure was used to choose a carbon reduction action.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -710,6 +988,21 @@
       "environmentalDimension": "Energy",
       "associatedMetric": "Participation in flexibility programs; % load modulated during events",
       "reference": "EU Electricity Directive, EN 50600-4-7 (Availability and resilience), Smart Grid Task Force reports",
+      "evidenceExpected": "Participation agreements, demand response logs, technical infrastructure specifications",
+      "commonEvidence": [
+        {
+          "text": "A technical specification or pilot note that shows the infrastructure can change its load.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A participation agreement for a demand-response or smart-grid scheme.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A demand-response log that records a load change in response to a grid signal.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -744,6 +1037,21 @@
       "environmentalDimension": "Climate Change",
       "associatedMetric": "Number and frequency of reported environmental KPIs",
       "reference": "ISO 14031, ESRS E1–E5, GHG Protocol, ISO 14064",
+      "evidenceExpected": "Environmental monitoring reports, KPI dashboards, internal audit summaries",
+      "commonEvidence": [
+        {
+          "text": "An environmental monitoring report that records at least one KPI, such as energy, greenhouse gas, water, or waste.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A KPI dashboard that covers more than one of those areas and is updated on a set cycle.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "An internal audit summary that reviews those figures.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -778,6 +1086,21 @@
       "environmentalDimension": "Climate Change",
       "associatedMetric": "Number of decisions/plans referencing environmental KPIs (optional, qualitative)",
       "reference": "ISO 14001, ISO 14031, ESRS E1",
+      "evidenceExpected": "Strategic plans, risk assessments, board minutes, policy documents referencing environmental data",
+      "commonEvidence": [
+        {
+          "text": "A plan, risk note, or meeting minute that cites one environmental metric.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A strategic plan or policy that uses environmental metrics when a decision is made.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that shows the metric changed a planning or operational decision.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -812,6 +1135,21 @@
       "environmentalDimension": "Climate Change",
       "associatedMetric": "Number or coverage of LCA studies conducted",
       "reference": "ISO 14040, ISO 14044, ESRS E1",
+      "evidenceExpected": "LCA reports, sustainability assessments, documentation of lifecycle impacts",
+      "commonEvidence": [
+        {
+          "text": "A lifecycle assessment or sustainability assessment for one asset, service, or lifecycle phase.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Documentation of lifecycle impacts, including global warming potential or cumulative energy demand, across more than one phase.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that the assessment result was used in a design, procurement, or planning decision.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -846,6 +1184,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "Water Usage Effectiveness (WUE)",
       "reference": "ISO/IEC 30134-9, ISO 14046 (Water footprint)",
+      "evidenceExpected": "Water consumption records, WUE logs, utility bills, monitoring dashboards",
+      "commonEvidence": [
+        {
+          "text": "A water consumption record, utility bill, or estimate of Water Usage Effectiveness.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A Water Usage Effectiveness log that is updated on a set cycle and compared with a benchmark.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A monitoring record that shows the figure was used to change a technical practice.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -880,6 +1233,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14031, ISO 50001",
+      "evidenceExpected": "Tool configuration documents, platform screenshots, internal reports or dashboards",
+      "commonEvidence": [
+        {
+          "text": "A screenshot or configuration note for a basic tool that tracks one environmental indicator.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A configuration document for a tool that tracks and reports indicators across the research infrastructure.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "An internal report or dashboard produced from that tool on a set cycle.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -914,6 +1282,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "Volume of e-waste or operational waste per year",
       "reference": "WEEE Directive, ISO 14001, EU Circular Economy Action Plan",
+      "evidenceExpected": "Waste logs, recycling records, internal waste reduction procedures",
+      "commonEvidence": [
+        {
+          "text": "A waste log that records operational waste or e-waste from one activity.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Recycling records that show what was diverted from disposal.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "An internal waste reduction procedure that is reviewed against the log.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -948,6 +1331,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "% of equipment reused/recycled vs. disposed",
       "reference": "WEEE Directive, ISO 14001, ISO 14006",
+      "evidenceExpected": "Decommissioning procedures, asset disposal logs, supplier take-back agreements",
+      "commonEvidence": [
+        {
+          "text": "An asset disposal log for at least one piece of decommissioned equipment.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A decommissioning procedure that states whether equipment is reused, recycled, or disposed of.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A supplier take-back agreement, or a log that shows the procedure was followed.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -982,6 +1380,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "% of IT purchases meeting circularity criteria",
       "reference": "EU Circular Economy Action Plan, ISO 20400 (Sustainable Procurement)",
+      "evidenceExpected": "Procurement guidelines, tender documents, lifecycle impact assessments",
+      "commonEvidence": [
+        {
+          "text": "A tender or procurement note that includes one circular criterion, such as reuse, modularity, or refurbishment.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Procurement guidelines that apply circular IT criteria across purchases.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record of refurbished or reused equipment in the asset stock.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1016,6 +1429,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "Presence and scope of pollution monitoring and control measures",
       "reference": " ISO 14001, EU Industrial Emissions Directive, ESRS E2",
+      "evidenceExpected": "Environmental monitoring reports, mitigation plans, pollution control system logs",
+      "commonEvidence": [
+        {
+          "text": "An environmental monitoring report for one pollution risk, such as air, water, or soil.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A mitigation plan for the risks that report names.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A pollution control log that is reviewed on a set cycle.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1050,6 +1478,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "% of materials/products procured meeting low-impact criteria",
       "reference": "ESPR (Ecodesign), EU Green Public Procurement Criteria, ISO 14024",
+      "evidenceExpected": "Procurement policies, supplier declarations, product environmental labels",
+      "commonEvidence": [
+        {
+          "text": "A purchase record that uses one environmental criterion or a product environmental label.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A procurement policy that requires low-impact or non-toxic options across product categories.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "Supplier declarations that the purchased products meet those criteria.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1084,6 +1527,21 @@
       "environmentalDimension": "Water",
       "associatedMetric": "Total water use (m³/year), reduction trend (%)",
       "reference": "ISO 14046, EU Water Framework Directive",
+      "evidenceExpected": "Water bills, consumption logs, reduction plans, monitoring dashboards",
+      "commonEvidence": [
+        {
+          "text": "A water bill or consumption log that records water use.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A reduction plan with a target for water use.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A monitoring record that is reviewed against that target.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1118,6 +1576,21 @@
       "environmentalDimension": "Water",
       "associatedMetric": "N/A",
       "reference": "EU Biodiversity Strategy, ISO 14001, ESRS E4",
+      "evidenceExpected": "Environmental impact assessments, ecological site studies, mitigation or offsetting plans",
+      "commonEvidence": [
+        {
+          "text": "An environmental impact assessment or ecological site study for the physical site.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A mitigation or offsetting plan for the impacts that study names.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that the plan is reviewed when the site changes.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1152,6 +1625,21 @@
       "environmentalDimension": "Water",
       "associatedMetric": "% of captured rainwater reused",
       "reference": "EU Water Framework Directive, ISO 14046",
+      "evidenceExpected": "Infrastructure plans, water reuse system specs, site design documentation",
+      "commonEvidence": [
+        {
+          "text": "A site plan that includes one rainwater, reuse, or runoff measure.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Specifications for a rainwater harvesting or water reuse system that is in use.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record of how much captured water is reused.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1186,6 +1674,21 @@
       "environmentalDimension": "Water",
       "associatedMetric": "Water Usage Effectiveness (WUE), annual water withdrawal for cooling",
       "reference": "ISO 30134-9, ESRS E3, EU CoC for Data Centres",
+      "evidenceExpected": "WUE data / cooling system specs",
+      "commonEvidence": [
+        {
+          "text": "A cooling-system note that records water use.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Water Usage Effectiveness data with a reduction target.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record of a water-saving measure in use, such as reuse or a closed loop.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1220,6 +1723,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14006, ESRS E1, ESPR, EU Taxonomy (Substantial Contribution Criteria)",
+      "evidenceExpected": "Design documentation, planning procedures, sustainability review checklists",
+      "commonEvidence": [
+        {
+          "text": "A design note that records one sustainability review of a new infrastructure item or service.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A planning procedure that states the sustainability criteria used in design.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A sustainability review checklist completed before the design is approved.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1254,6 +1772,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14001, ISO 14006, EU GPP criteria",
+      "evidenceExpected": "Implementation plans, procurement records, site inspection logs",
+      "commonEvidence": [
+        {
+          "text": "An implementation plan or procurement record that includes one sustainability criterion.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "Site inspection logs that check those criteria during deployment.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that the criteria are applied across implementation activities, not only in one area.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1288,6 +1821,21 @@
       "environmentalDimension": "Non-environmental",
       "associatedMetric": "N/A",
       "reference": "ISO 14001, ISO 50001, ESRS, ESPR, EED",
+      "evidenceExpected": "O&M procedures, sustainability logs, monitoring dashboards",
+      "commonEvidence": [
+        {
+          "text": "An operations or maintenance procedure that includes one sustainability practice.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "A sustainability log or monitoring dashboard that is kept up to date.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A record that the practice is reviewed and changed when the results call for it.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
@@ -1322,6 +1870,21 @@
       "environmentalDimension": "Waste",
       "associatedMetric": "N/A",
       "reference": "ISO 14001, WEEE Directive, ISO 14006",
+      "evidenceExpected": "Decommissioning plans, asset recovery procedures, reuse/recycling strategies",
+      "commonEvidence": [
+        {
+          "text": "A decommissioning note that covers reuse, recycling, or disposal for one asset type.",
+          "supportsLevel": 2
+        },
+        {
+          "text": "An asset recovery procedure that states who carries it out.",
+          "supportsLevel": 3
+        },
+        {
+          "text": "A reuse or recycling strategy that is followed when infrastructure or a service is closed.",
+          "supportsLevel": 3
+        }
+      ],
       "answerOptions": [
         {
           "score": 1,
