@@ -139,10 +139,105 @@ export function getTargetStatus(
   return "Below Target";
 }
 
+const EFFORT_SIZE_LABEL: Record<EffortRequired, "S" | "M" | "L"> = {
+  Low: "S",
+  Medium: "M",
+  High: "L",
+};
+
 /**
- * Compute an implementation priority from improvement priority and effort.
+ * Screen label for a stored effort value. S/M/L map to Low/Medium/High.
+ */
+export function effortSizeLabel(effort: EffortRequired): "S" | "M" | "L" {
+  return EFFORT_SIZE_LABEL[effort];
+}
+
+/**
+ * Effort label for reports. A suggestion that has not been saved is marked.
+ */
+export function formatEffortLabel(effort: EffortRequired, suggested = false): string {
+  const label = effortSizeLabel(effort);
+  return suggested ? `${label} (suggested)` : label;
+}
+
+/**
+ * Levels still short of the topic target. Positive means below target.
+ * Undefined when the target or the recorded level is missing.
+ */
+export function getCapabilityGap(
+  selectedScore: CapabilityScore | undefined,
+  targetCapability: CapabilityScore | undefined
+): number | undefined {
+  if (selectedScore === undefined || targetCapability === undefined) {
+    return undefined;
+  }
+  return targetCapability - selectedScore;
+}
+
+/**
+ * Short label for the gap used on the action plan and report.
+ */
+export function formatCapabilityGap(gap: number | undefined): string {
+  if (gap === undefined) return "No target";
+  if (gap <= 0) return "On target";
+  if (gap === 1) return "Gap of 1 level";
+  return `Gap of ${gap} levels`;
+}
+
+/**
+ * Suggest an effort size when none has been saved.
+ * Callers must keep a saved value and use this only while the field is empty.
  *
- * Matrix:
+ * Gap is the topic target minus the recorded level.
+ * - No target or no answer: High improvement priority → Medium, otherwise Low.
+ * - On target or ahead: Low.
+ * - One level short: Low improvement priority → Low, otherwise Medium.
+ * - Two or more levels short: High improvement priority → High, otherwise Medium.
+ */
+export function suggestEffort(
+  improvementPriority: ImprovementPriority,
+  capabilityGap: number | undefined
+): EffortRequired {
+  if (capabilityGap === undefined) {
+    return improvementPriority === "High" ? "Medium" : "Low";
+  }
+  if (capabilityGap <= 0) return "Low";
+  if (capabilityGap === 1) {
+    return improvementPriority === "Low" ? "Low" : "Medium";
+  }
+  return improvementPriority === "High" ? "High" : "Medium";
+}
+
+const IMPLEMENTATION_SCALE: ImplementationPriority[] = [
+  "No Action Needed",
+  "Low Priority",
+  "Planned",
+  "Urgent",
+  "Immediate",
+];
+
+/**
+ * Move an implementation priority by the gap to target.
+ * One level short leaves the matrix result. A wider gap makes it one step
+ * more urgent. Meeting or passing the target makes it one step less urgent.
+ * A missing gap does not move the result.
+ */
+export function adjustImplementationPriorityForGap(
+  priority: ImplementationPriority,
+  capabilityGap: number | undefined
+): ImplementationPriority {
+  if (capabilityGap === undefined || capabilityGap === 1) return priority;
+  const index = IMPLEMENTATION_SCALE.indexOf(priority);
+  const shift = capabilityGap >= 2 ? 1 : -1;
+  const next = Math.min(IMPLEMENTATION_SCALE.length - 1, Math.max(0, index + shift));
+  return IMPLEMENTATION_SCALE[next];
+}
+
+/**
+ * Compute an implementation priority from improvement priority, effort, and
+ * the optional gap to target.
+ *
+ * Base matrix (improvement priority + effort):
  * - High + Low → Immediate
  * - High + Medium → Urgent
  * - High + High → Planned
@@ -154,30 +249,36 @@ export function getTargetStatus(
  * - Low + Low → Planned
  * - Low + Medium → Low Priority
  * - Low + High → No Action Needed
+ *
+ * The gap then shifts that result by one step, as in
+ * adjustImplementationPriorityForGap. Improvement priority itself is unchanged.
  */
 export function getImplementationPriority(
   improvementPriority: ImprovementPriority,
-  effortRequired: EffortRequired
+  effortRequired: EffortRequired,
+  capabilityGap?: number
 ): ImplementationPriority {
   const p = improvementPriority;
   const e = effortRequired;
+  let base: ImplementationPriority;
 
   if (p === "High") {
-    if (e === "Low") return "Immediate";
-    if (e === "Medium") return "Urgent";
-    return "Planned"; // High + High
+    if (e === "Low") base = "Immediate";
+    else if (e === "Medium") base = "Urgent";
+    else base = "Planned";
+  } else if (p === "Medium") {
+    if (e === "Low") base = "Urgent";
+    else if (e === "Medium") base = "Planned";
+    else base = "Low Priority";
+  } else if (e === "Low") {
+    base = "Planned";
+  } else if (e === "Medium") {
+    base = "Low Priority";
+  } else {
+    base = "No Action Needed";
   }
 
-  if (p === "Medium") {
-    if (e === "Low") return "Urgent";
-    if (e === "Medium") return "Planned";
-    return "Low Priority"; // Medium + High
-  }
-
-  // p === "Low"
-  if (e === "Low") return "Planned";
-  if (e === "Medium") return "Low Priority";
-  return "No Action Needed"; // Low + High
+  return adjustImplementationPriorityForGap(base, capabilityGap);
 }
 
 /**

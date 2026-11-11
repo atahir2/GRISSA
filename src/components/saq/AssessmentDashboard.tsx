@@ -12,7 +12,7 @@ import {
   loadAnswers,
   loadActionMetadata,
 } from "@/src/lib/saq/assessment.repository";
-import type { AssessmentRole } from "@/src/lib/saq/permissions";
+import { canExportReport, type AssessmentRole } from "@/src/lib/saq/permissions";
 import { useAssessmentVersionRoute } from "./useAssessmentVersionRoute";
 import type { ScopeSelection, AssessmentAnswer } from "@/src/lib/saq/engine/results";
 import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
@@ -25,6 +25,7 @@ import { PriorityCountCard } from "./PriorityCountCard";
 import { ReadinessHeroCard } from "./ReadinessHeroCard";
 import { StrengthsImprovementPanel } from "./StrengthsImprovementPanel";
 import { ThemeReadinessSnapshot } from "./ThemeReadinessSnapshot";
+import { TopicComparisonPanel } from "./TopicComparisonPanel";
 import { StrategicRecommendationsCard } from "./StrategicRecommendationsCard";
 import { GrissaPageHeader } from "./GrissaPageHeader";
 
@@ -270,16 +271,18 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
                 >
                   View report
                 </Link>
-                <Link
-                  href={
-                    effectiveVersionId
-                      ? `/saq/report/${assessmentId}?versionId=${effectiveVersionId}`
-                      : `/saq/report/${assessmentId}`
-                  }
-                  className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                >
-                  Export PDF
-                </Link>
+                {canExportReport(myRole) && (
+                  <Link
+                    href={
+                      effectiveVersionId
+                        ? `/saq/report/${assessmentId}?versionId=${effectiveVersionId}`
+                        : `/saq/report/${assessmentId}`
+                    }
+                    className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  >
+                    Export PDF
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -303,6 +306,7 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
             improvementAreas={interpretation.improvementAreas}
           />
           <ThemeReadinessSnapshot themes={assessmentResults.themeResults} />
+          <TopicComparisonPanel assessmentResults={assessmentResults} compact />
           <StrategicRecommendationsCard
             recommendations={interpretation.strategicRecommendations}
           />
@@ -414,10 +418,13 @@ export function AssessmentDashboard({ assessmentId }: AssessmentDashboardProps) 
         {/* Action plan overview */}
         <DashboardSection
           title="Action plan overview"
-          subtitle="Recommended actions by implementation priority. Use the full action plan in the assessment flow for details."
+          subtitle="When to act is calculated. Effort (S, M, L) is the size of each action and is chosen on the action plan."
           className="mb-12"
         >
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              When to act
+            </p>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               <div className="rounded-lg bg-red-50 px-4 py-3">
                 <span className="text-xs font-medium uppercase text-red-700">

@@ -7,6 +7,7 @@ import {
   getQuestionImprovementPriority,
   getRecommendedActionForScore,
   getTargetStatus,
+  suggestEffort,
   ImpactLevel,
   ImprovementPriority,
 } from "./scoring";
@@ -46,8 +47,19 @@ export const scoringExamples = {
     const priority: ImprovementPriority = "High";
     const effort: EffortRequired = "Low";
     const impl = getImplementationPriority(priority, effort);
-    // impl === "Immediate"
+    // impl === "Immediate" when the gap is missing or exactly one level
+    const widened = getImplementationPriority(priority, "High", 2);
+    // High + High is Planned; a gap of 2 shifts it to Urgent
+    const met = getImplementationPriority(priority, effort, 0);
+    // High + Low is Immediate; meeting the target shifts it to Urgent
     void impl;
+    void widened;
+    void met;
+  },
+
+  suggestedEffortExample(): EffortRequired {
+    // Two levels short and high improvement priority → High, shown as L
+    return suggestEffort("High", 2);
   },
 
   recommendedActionExample(): string | undefined {

@@ -436,3 +436,141 @@ export function buildAssessmentResults(
   };
 }
 
+export type TopicGapStatus = "Met" | "Below target" | "No target" | "Not answered";
+
+export interface TopicQuestionSnapshot {
+  questionCode: string;
+  selectedScore?: CapabilityScore;
+}
+
+export interface TopicComparison {
+  themeId: string;
+  themeTitle: string;
+  scopeId: string;
+  scopeCode: string;
+  scopeLabel: string;
+  targetCapability?: CapabilityScore;
+  questions: TopicQuestionSnapshot[];
+  currentScore?: CapabilityScore;
+  gap?: number;
+  status: TopicGapStatus;
+  gapPriority?: ImprovementPriority;
+}
+
+export interface TopicComparisonGroup {
+  themeId: string;
+  themeTitle: string;
+  topics: TopicComparison[];
+}
+
+export interface TopicComparisonSummary {
+  inScopeTopics: number;
+  met: number;
+  belowTarget: number;
+  noTarget: number;
+  notAnswered: number;
+}
+
+const PRIORITY_RANK: Record<ImprovementPriority, number> = {
+  High: 3,
+  Medium: 2,
+  Low: 1,
+};
+
+function highestPriority(values: Array<ImprovementPriority | undefined>): ImprovementPriority | undefined {
+  let best: ImprovementPriority | undefined;
+  for (const value of values) {
+    if (!value) continue;
+    if (!best || PRIORITY_RANK[value] > PRIORITY_RANK[best]) best = value;
+  }
+  return best;
+}
+
+/**
+ * Per-topic view of the target set in Scope & Goals against the recorded level.
+ * When a topic has more than one question, the lower score sets the topic gap.
+ */
+export function buildTopicComparison(results: AssessmentResults): {
+  groups: TopicComparisonGroup[];
+  summary: TopicComparisonSummary;
+} {
+  const summary: TopicComparisonSummary = {
+    inScopeTopics: 0,
+    met: 0,
+    belowTarget: 0,
+    noTarget: 0,
+    notAnswered: 0,
+  };
+
+  const groups: TopicComparisonGroup[] = results.themeResults
+    .map((theme) => {
+      const topics: TopicComparison[] = theme.scopeResults
+        .filter((scope) => scope.inScope)
+        .map((scope) => {
+          const questions = scope.questionResults.map((question) => ({
+            questionCode: question.questionCode,
+            selectedScore: question.selectedScore,
+          }));
+          const allAnswered = scope.questionResults.every(
+            (question) => question.selectedScore !== undefined
+          );
+          const scores = scope.questionResults
+            .map((question) => question.selectedScore)
+            .filter((score): score is CapabilityScore => score !== undefined);
+          const currentScore =
+            allAnswered && scores.length > 0
+              ? (Math.min(...scores) as CapabilityScore)
+              : undefined;
+
+          let status: TopicGapStatus;
+          if (!allAnswered) status = "Not answered";
+          else if (scope.targetCapability === undefined) status = "No target";
+          else if (currentScore !== undefined && currentScore >= scope.targetCapability) status = "Met";
+          else status = "Below target";
+
+          const gap =
+            scope.targetCapability !== undefined && currentScore !== undefined
+              ? scope.targetCapability - currentScore
+              : undefined;
+
+          const gapPriority =
+            status === "Below target"
+              ? highestPriority(
+                  scope.questionResults
+                    .filter(
+                      (question) =>
+                        question.selectedScore !== undefined &&
+                        scope.targetCapability !== undefined &&
+                        question.selectedScore < scope.targetCapability
+                    )
+                    .map((question) => question.improvementPriority)
+                )
+              : undefined;
+
+          summary.inScopeTopics += 1;
+          if (status === "Met") summary.met += 1;
+          else if (status === "Below target") summary.belowTarget += 1;
+          else if (status === "No target") summary.noTarget += 1;
+          else summary.notAnswered += 1;
+
+          return {
+            themeId: theme.themeId,
+            themeTitle: theme.themeTitle,
+            scopeId: scope.scopeId,
+            scopeCode: scope.scopeCode,
+            scopeLabel: scope.scopeLabel,
+            targetCapability: scope.targetCapability,
+            questions,
+            currentScore,
+            gap,
+            status,
+            gapPriority,
+          };
+        });
+      return { themeId: theme.themeId, themeTitle: theme.themeTitle, topics };
+    })
+    .filter((group) => group.topics.length > 0);
+
+  return { groups, summary };
+}
+
