@@ -9,6 +9,7 @@ How the Sustainability Self-Assessment (SAQ / GRISSA) tool is structured for saf
 - Source: `src/lib/saq/questionnaire.data.json`
 - Access: `src/lib/saq/questionnaire.repository.ts`
 - Themes, scope items, questions, answer options (capability scores 1–3)
+- Optional guidance on a question stays in this JSON: why it matters, what a level means in practice, common evidence, evidence expected (D8.1 column R), and clause references into `standards.data.json`. Column N is the level description already stored on each answer option. Empty fields stay hidden. Policy categories and reporting requirements are stored for later export and are not a separate browser.
 - **Not stored** in the runtime database
 
 ### 2) Runtime assessment layer
@@ -21,7 +22,7 @@ Selected by **`SAQ_DATABASE_PROVIDER`**:
 | `supabase` (legacy) | `src/lib/supabase/*`, `repositories/assessment.repository.supabase.ts`, RLS in `supabase/migrations/` |
 | unset | Selector defaults to **`supabase`** — set `postgres` explicitly for new deploys |
 
-**Logical tables:** `profiles` (optional display fields), Auth.js `users` / sessions (Postgres path), `assessments` (`owner_user_id`), `assessment_versions`, `assessment_collaborators`, `assessment_scope_selections`, `assessment_answers`, `assessment_action_items`.
+**Logical tables:** `profiles` (optional display fields), Auth.js `users` / sessions (Postgres path), `assessments` (`owner_user_id`), `assessment_versions`, `assessment_collaborators`, `assessment_scope_selections`, `assessment_answers`, `assessment_action_items`, `assessment_question_evidence`, `assessment_evidence_files`. Evidence files themselves live on disk under `SAQ_EVIDENCE_DIR`, outside `public/`.
 
 Scope, answers, and action metadata are keyed by **`version_id`**. Version statuses: `draft` | `submitted` | `reviewed` | `archived`. Content edits require edit role **and** draft status (`canEditAssessmentVersionContent` in `permissions.ts`).
 
@@ -40,7 +41,7 @@ Location: `src/lib/saq/engine/`
 |--------|------|
 | `scoring.ts` | Scoring and priority helpers/types |
 | `results.ts` | Assessment results / summaries from scope + answers |
-| `actions.ts` | Action-plan items and implementation summaries |
+| `actions.ts` | Action-plan items and implementation summaries. Effort suggestions and the gap shift are derived here and are not stored. |
 | `interpretation.ts` | Stakeholder-readable interpretation text |
 | `scope.ts` | In-scope maps and related helpers |
 

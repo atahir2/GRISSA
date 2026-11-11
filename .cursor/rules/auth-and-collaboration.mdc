@@ -11,7 +11,7 @@ alwaysApply: false
 - **Primary app auth:** **NextAuth** (credentials) with PostgreSQL-backed users via Drizzle adapter (`src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, register route). Session strategy is **JWT**.
 - **`AuthSessionProvider`:** wraps **`SessionProvider`** with **`basePath={withBasePath("/api/auth")}`** so client auth works under Next.js `basePath`.
 - **Middleware:** only **`src/middleware.ts`** (do not add a root `middleware.ts` — Next prioritizes root over `src/` and would shadow this file). Gate assessment / dashboard / report with **`next-auth/jwt`** `getToken`. If `NEXT_PUBLIC_SUPABASE_*` are set, optionally refresh Supabase cookies; that does **not** replace the NextAuth gate.
-- **Public:** `/saq` intro, `/login`, `/signup`, `/saq/manage` are not behind the middleware matcher; protected workflows redirect to Login with `next=…` when there is no JWT.
+- **Public:** `/saq` intro, `/login`, and `/signup` are not behind the middleware matcher. `/saq/manage` requires a session, same as assessment, dashboard, and report. Protected workflows redirect to Login with `next=…` when there is no JWT.
 - **Legacy:** `/auth/callback` may exchange Supabase `?code=` when that path is enabled; credentials flows use NextAuth forms.
 
 ## Versions and collaboration data
@@ -29,7 +29,7 @@ alwaysApply: false
 
 ## UI
 
-- **Collaborators:** `AssessmentCollaboratorsPanel`; listing may use provider-specific RPC/queries for emails.
+- **Collaborators:** `AssessmentCollaboratorsPanel`; listing may use provider-specific RPC/queries for emails. The action-plan assignee list uses the collaborator name when present, otherwise the email, and a typed team name is stored in the existing leader field.
 - **Versions:** `AssessmentVersionsPanel` / manage workspace; keep version resolution shared.
 - **Read-only:** viewers/reviewers (and non-draft versions) — permission helpers, not duplicate engine logic.
 

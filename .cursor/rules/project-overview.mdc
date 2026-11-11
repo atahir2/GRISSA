@@ -15,7 +15,8 @@ alwaysApply: true
 
 - Start from existing architecture and phrasing; avoid alternate SAQ concepts.
 - Keep report language stakeholder-friendly: baseline-oriented, not certification-decision language.
-- Apply focused rules: `architecture.mdc`, `saq-engine.mdc`, `ui-dashboard-report.mdc`, `postgres-persistence.mdc`, `supabase-persistence.mdc` (legacy), `auth-and-collaboration.mdc`.
+- Apply focused rules: `architecture.mdc`, `saq-engine.mdc`, `ui-dashboard-report.mdc`, `postgres-persistence.mdc`, `supabase-persistence.mdc` (legacy), `auth-and-collaboration.mdc`, `questionnaire-guidance.mdc`, `delivery-status.mdc`.
+- After each modification, update the matching `.cursor/rules` file and `docs/SAQ_PROJECT_CONTEXT.md` section 7. Do not leave the change only in code.
 
 ## Canonical Human Docs
 

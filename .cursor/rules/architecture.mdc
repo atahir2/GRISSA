@@ -27,3 +27,5 @@ alwaysApply: true
 - Postgres/Drizzle: `postgres-persistence.mdc`
 - Legacy Supabase: `supabase-persistence.mdc`
 - Auth, middleware, collaborators, versions permissions: `auth-and-collaboration.mdc`
+- Questionnaire help text: `questionnaire-guidance.mdc`
+- What is already built and what comes next: `delivery-status.mdc`

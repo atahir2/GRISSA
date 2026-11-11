@@ -18,7 +18,7 @@ Related docs:
 
 1. **Read this file**, then skim `docs/SAQ_ARCHITECTURE.md`.
 2. **Run the app** — set env (`DATABASE_URL`, `SAQ_DATABASE_PROVIDER=postgres`, `NEXTAUTH_*`); local Compose: `docs/DOCKER.md`. Then `npm install` and `npm run dev`.
-3. **Walk the workflow** — `/saq` (public Home) → sign in → `/saq/manage` (Workspace) → create assessment → Scope → Questionnaire → Results → Action plan → Dashboard → Report/PDF. Runtime data is **versioned** (`?versionId=`).
+3. **Walk the workflow** — `/saq` (public Home) → sign in → `/saq/manage` (Workspace) → create assessment → Scope → Questionnaire → Evidence → Results → Action plan → Dashboard → Report/PDF. Runtime data is **versioned** (`?versionId=`).
 4. **Know the three core layers** — static JSON questionnaire; runtime DB state; pure engine in `src/lib/saq/engine/*`.
 5. **Respect design rules** (section 6) — no questionnaire in DB; no persisted derived scores; UI calls repositories + engine only.
 
@@ -76,7 +76,7 @@ Derived outputs are always recomputed in memory. Full detail: `docs/SAQ_ARCHITEC
 | `/login`, `/signup` | NextAuth credentials |
 | `/auth/callback` | Legacy Supabase `?code=` exchange when that path is used |
 
-Middleware (`src/middleware.ts`) protects assessment / dashboard / report with NextAuth JWT. Collaboration roles: owner, editor, reviewer, viewer (`permissions.ts`).
+Middleware (`src/middleware.ts`) protects Workspace (`/saq/manage`), assessment, dashboard, and report with NextAuth JWT. Collaboration roles: owner, editor, reviewer, viewer (`permissions.ts`). Version-specific collaborator rows override an all-versions row. Owner-only: new version, delete version, export. Content saves require a draft.
 
 ---
 
@@ -86,8 +86,12 @@ Middleware (`src/middleware.ts`) protects assessment / dashboard / report with N
 - Owned assessments + collaborators; role-aware edit / manage / delete / export
 - **Assessment versions** (draft / submitted / reviewed / archived); content edits only on **draft**
 - Scope, questionnaire (1–3), live results and action plans via engine
+- One collapsed Help panel per question: level descriptions (D8.1 column N), evidence expected (column R), and, for Governance and Compliance, why it matters, level in practice, and common evidence. Every theme has the same checklist shape.
+- Standards catalog on the Workspace, filtered by category and industry
+- Per-topic target versus current comparison on Results, dashboard, and report
 - Dashboard metrics and theme/action distribution
-- Report + PDF export from the same engine outputs
+- Report + PDF export from the same engine outputs (owner only)
+- Action plan effort shown as S/M/L (the size of the work), with a suggestion only when empty. When to act is the calculated timing and is labeled separately. Assignee and next-step notes.
 - Explicit Save progress; delete assessment (owner); beta banner on SAQ chrome
 
 ---
@@ -101,3 +105,19 @@ Middleware (`src/middleware.ts`) protects assessment / dashboard / report with N
 - Engine stays pure: no React, no DB clients, no auth imports.
 
 When extending the system, keep these boundaries so dashboard, report, and assessment flow stay consistent.
+
+---
+
+## 7. Delivery status
+
+Local implementation through guided help. Production upload waits for an explicit request. See `.cursor/rules/delivery-status.mdc`.
+
+| Step | Status |
+|------|--------|
+| Profile, access, versions, topic comparison, email confirmation, version-scoped roles, Workspace standards portal | Done locally |
+| Guided help | One collapsed Help panel per question. Column N is the level description. Column R is evidence expected. Extra Governance notes stay inside that panel. |
+| Phase 7 Evidence | Done locally. Questions stay collapsed until opened. Every theme has checklist lines (one for level 2, two for level 3). Each level is headed once (“To achieve level 2:”) and the lines under it are numbered. The row shows Current level and Target level. Migration `0005_assessment_evidence` and the `saq_evidence` volume are required. |
+| Phase 8 Action plan | Done locally. Effort (S/M/L) is the size of the work. When to act (Immediate / Urgent / Planned) is the calculated timing and is labeled that way on every screen. Assignee and Next step. |
+| Phase 9 Question hiding | After applicability tags are reviewed. |
+
+SMTP and Google sign-in appear only when the user puts real values in the env files. Postgres and Adminer are published on 127.0.0.1 only. The app port stays reachable by the reverse proxy. Source changes need `npm run docker:up`; a container restart is not enough.

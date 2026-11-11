@@ -137,6 +137,8 @@ In your env file:
 - `APP_HOST_PORT` (default `3000`)
 - `ADMINER_HOST_PORT` (default `8080`)
 
+Postgres and Adminer are published on `127.0.0.1` only. The app port stays reachable by the reverse proxy.
+
 ## Build notes
 
 - The **Dockerfile** does not bake `.env*` files; Compose **`env_file`** injects runtime config.
@@ -252,3 +254,15 @@ docker exec -w /app saq-app node -e \
 - **`DB_FAIL 28P01`** — wrong password in **`DATABASE_URL`** vs Postgres user password.
 
 After **`DB_OK`**, retry sign-up and sign-in in the browser.
+
+## Confirmation email and Google sign-in
+
+New email accounts stay unverified until the person opens the confirmation link. That link marks the address confirmed and opens the login page.
+
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `EMAIL_FROM` in the env file mounted into `app`. When those values are missing, signup shows the confirmation link on screen so a local stack can still be tested.
+
+Google sign-in appears on the login and signup pages when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set. The Google redirect URI is `{NEXTAUTH_URL}/api/auth/callback/google`.
+
+## Evidence files
+
+Checklist ticks and notes are version-scoped rows. Uploaded files are stored under `SAQ_EVIDENCE_DIR` (Compose: `/app/data/evidence` on the `saq_evidence` volume), not in `public/`. Allowed types are PDF, PNG, JPG, and DOCX, up to 10 MB. Apply migration `0005_assessment_evidence` with `npm run db:migrate` or `npm run docker:migrate` before using the Evidence step.

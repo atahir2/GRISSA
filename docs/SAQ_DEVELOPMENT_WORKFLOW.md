@@ -68,9 +68,12 @@ How to extend the SAQ safely while preserving architectural boundaries. Layer de
 
 Prefer linking between docs/rules rather than copying long blocks.
 
-## Updating Memory After Milestones
+## Updating Memory After Each Change
 
-1. Update the relevant `.cursor/rules/*.mdc` first (behavioral guidance).
+Do this after every modification, enhancement, or addition, not only at milestones.
+
+1. Update the relevant `.cursor/rules/*.mdc` first (behavioral guidance). Current delivery status lives in `delivery-status.mdc`.
 2. Update the matching `docs/` file for narrative/onboarding.
-3. Keep `docs/SAQ_PROJECT_CONTEXT.md` as the broad quick-reference anchor.
+3. Keep `docs/SAQ_PROJECT_CONTEXT.md` section 7 as the broad quick-reference anchor.
 4. Touch `docs/DOCKER.md` when Compose, env, or deploy procedures change.
+5. Add a project skill only when the change is a repeatable procedure that rules and docs do not already cover.

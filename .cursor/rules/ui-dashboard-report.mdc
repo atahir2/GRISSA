@@ -18,6 +18,8 @@ Applies to `src/components/saq/`, `src/app/saq/dashboard/`, `src/app/saq/report/
 
 - Keep hierarchy clear: at-a-glance metrics, capability/priority summaries, theme and action distribution.
 - Use engine outputs as source data (same as assessment flow / report).
+- Action plan effort is shown as S/M/L and means the size of the work. When to act (Immediate / Urgent / Planned) is the calculated timing and is labeled that way on the action plan, dashboard, and report. Assignee is a collaborator name or a typed team name, stored in the existing leader field. The note field is labeled Next step and is not filled from the recommended action.
+- The Workspace standards list has Category and Industry filters. Evidence rows show Current level and Target level. Checklist lines for one level sit under a single “To achieve level N:” heading and are numbered.
 - **`DashboardInfoBanner`**, **`DashboardSection`** (`headingSurface="canvas"` by default), **`ReadinessHeroCard`** — flat white card + semantic accent.
 - Users without edit access: read-only UX; defer access rules to `permissions.ts` + repository.
 

@@ -13,7 +13,8 @@ Runtime SAQ data uses **`DATABASE_URL`** and **`src/lib/db/drizzle.ts`** (pool +
 - **`SAQ_DATABASE_PROVIDER=postgres`** selects `repositories/assessment.repository.postgres.ts` via `assessment.repository.selector.ts`.
 - If the env var is **unset**, the selector defaults to **`supabase`** — set `postgres` explicitly for Compose/new deploys.
 - Schema: **`drizzle/schema.ts`** · migrations: **`drizzle/migrations/`** · config: **`drizzle.config.ts`** (`npm run db:generate` / `db:migrate` / `db:studio`).
-- Includes Auth.js tables (`users`, `accounts`, `sessions`, …) and SAQ tables including **`assessment_versions`**; scope/answers/action items require **`version_id`**.
+- Includes Auth.js tables (`users`, `accounts`, `sessions`, …) and SAQ tables including **`assessment_versions`**; scope, answers, action items, and evidence require **`version_id`**.
+- Evidence files are not database blobs and not files in `public/`. Store them under **`SAQ_EVIDENCE_DIR`**. Downloads go through an authenticated route.
 
 ## Boundaries
 
