@@ -5,6 +5,7 @@
 
 export type {
   ActionMetadata,
+  AssessmentContextUpdate,
   AssessmentRepository,
   AssessmentRuntimeRepository,
   AssessmentVersionUpdate,
@@ -16,10 +17,14 @@ import type {
   AssessmentCollaborator,
   AssessmentListItem,
   AssessmentVersion,
+  EvidenceFileRecord,
+  EvidenceState,
+  QuestionEvidence,
   ScopeSelection,
 } from "./assessment.types";
 import type {
   ActionMetadata,
+  AssessmentContextUpdate,
   AssessmentVersionUpdate,
 } from "./repositories/assessment.repository.interface";
 import type { AssessmentRole } from "./permissions";
@@ -40,6 +45,15 @@ async function callRepositoryApi<T>(action: string, payload?: Record<string, unk
 
 export function createAssessment(organisationName: string) {
   return callRepositoryApi<Assessment>("createAssessment", { organisationName });
+}
+
+export function updateAssessmentContext(
+  assessmentId: string,
+  patch: AssessmentContextUpdate
+): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("updateAssessmentContext", { assessmentId, patch }).then(
+    () => undefined
+  );
 }
 
 export function deleteAssessment(assessmentId: string): Promise<void> {
@@ -106,6 +120,46 @@ export function loadActionMetadata(
   });
 }
 
+export function loadEvidence(assessmentId: string, versionId: string): Promise<EvidenceState> {
+  return callRepositoryApi<EvidenceState>("loadEvidence", { assessmentId, versionId });
+}
+
+export function saveEvidence(
+  assessmentId: string,
+  versionId: string,
+  questions: QuestionEvidence[]
+): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("saveEvidence", { assessmentId, versionId, questions }).then(
+    () => undefined
+  );
+}
+
+export function uploadEvidenceFile(
+  assessmentId: string,
+  versionId: string,
+  questionId: string,
+  file: File
+): Promise<EvidenceFileRecord> {
+  const body = new FormData();
+  body.set("assessmentId", assessmentId);
+  body.set("versionId", versionId);
+  body.set("questionId", questionId);
+  body.set("file", file);
+  return appFetch("/api/saq/evidence", { method: "POST", body }).then(async (res) => {
+    const json = (await res.json()) as { error?: string } & EvidenceFileRecord;
+    if (!res.ok) throw new Error(json.error ?? "Upload failed.");
+    return json;
+  });
+}
+
+export function deleteEvidenceFile(fileId: string): Promise<void> {
+  return appFetch(`/api/saq/evidence/${fileId}`, { method: "DELETE" }).then(async (res) => {
+    if (res.ok) return;
+    const json = (await res.json()) as { error?: string };
+    throw new Error(json.error ?? "Could not remove the file.");
+  });
+}
+
 export function getAssessmentAccess(assessmentId: string): Promise<AssessmentAccess | null> {
   return callRepositoryApi<AssessmentAccess | null>("getAssessmentAccess", { assessmentId });
 }
@@ -147,6 +201,13 @@ export function updateAssessmentVersion(
   }).then(() => undefined);
 }
 
+export function deleteAssessmentVersion(assessmentId: string, versionId: string): Promise<void> {
+  return callRepositoryApi<{ ok: true }>("deleteAssessmentVersion", {
+    assessmentId,
+    versionId,
+  }).then(() => undefined);
+}
+
 export function listAssessmentCollaborators(assessmentId: string): Promise<AssessmentCollaborator[]> {
   return callRepositoryApi<AssessmentCollaborator[]>("listAssessmentCollaborators", { assessmentId });
 }
@@ -154,11 +215,15 @@ export function listAssessmentCollaborators(assessmentId: string): Promise<Asses
 export function addCollaboratorByEmail(
   assessmentId: string,
   email: string,
-  role: Exclude<AssessmentRole, "owner">
+  role: Exclude<AssessmentRole, "owner">,
+  versionId?: string | null
 ): Promise<void> {
-  return callRepositoryApi<{ ok: true }>("addCollaboratorByEmail", { assessmentId, email, role }).then(
-    () => undefined
-  );
+  return callRepositoryApi<{ ok: true }>("addCollaboratorByEmail", {
+    assessmentId,
+    email,
+    role,
+    versionId: versionId ?? null,
+  }).then(() => undefined);
 }
 
 export function updateCollaboratorRole(

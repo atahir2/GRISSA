@@ -30,8 +30,10 @@ import {
   isAssessmentVersionStatus,
   type AssessmentRole,
 } from "../permissions";
+import { isIndustry, isOperatingModel } from "@/src/lib/auth/organisation-profile";
 import type {
   ActionMetadata,
+  AssessmentContextUpdate,
   AssessmentRepository,
   AssessmentVersionUpdate,
 } from "./assessment.repository.interface";
@@ -52,12 +54,16 @@ async function requireSession(supabase: SupabaseBrowserClient) {
 function rowToAssessment(row: {
   id: string;
   organisation_name: string;
+  industry?: string | null;
+  operating_model?: string | null;
   created_at: string;
   updated_at: string;
 }): Assessment {
   return {
     id: row.id,
     organisationName: row.organisation_name,
+    industry: row.industry ?? null,
+    operatingModel: row.operating_model ?? null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -129,7 +135,7 @@ export async function getAssessmentAccess(assessmentId: string): Promise<Assessm
   const user = await requireSession(supabase);
   const { data, error } = await supabase
     .from("assessments")
-    .select("id, organisation_name, owner_user_id, created_at, updated_at")
+    .select("id, organisation_name, industry, operating_model, owner_user_id, created_at, updated_at")
     .eq("id", assessmentId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -194,6 +200,29 @@ export async function createAssessment(organisationName: string): Promise<Assess
   if (verError) throw new Error(verError.message);
 
   return rowToAssessment(data);
+}
+
+export async function updateAssessmentContext(
+  assessmentId: string,
+  patch: AssessmentContextUpdate
+): Promise<void> {
+  const access = await getAssessmentAccess(assessmentId);
+  if (!access || !canEditAssessment(access.myRole)) {
+    throw new Error("You do not have permission to edit this assessment.");
+  }
+  if (patch.industry && !isIndustry(patch.industry)) {
+    throw new Error("Select a known industry.");
+  }
+  if (patch.operatingModel && !isOperatingModel(patch.operatingModel)) {
+    throw new Error("Select a known operating model.");
+  }
+  const row: Record<string, string | null> = {};
+  if ("industry" in patch) row.industry = patch.industry ?? null;
+  if ("operatingModel" in patch) row.operating_model = patch.operatingModel ?? null;
+  if (Object.keys(row).length === 0) return;
+  const supabase = createClient();
+  const { error } = await supabase.from("assessments").update(row).eq("id", assessmentId);
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteAssessment(assessmentId: string): Promise<void> {
@@ -447,6 +476,33 @@ export async function updateAssessmentVersion(
   await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", assessmentId);
 }
 
+export async function deleteAssessmentVersion(assessmentId: string, versionId: string): Promise<void> {
+  const access = await getAssessmentAccess(assessmentId);
+  if (!access || !canDeleteAssessment(access.myRole)) {
+    throw new Error("Only the owner can delete a version.");
+  }
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("assessment_versions")
+    .select("id")
+    .eq("assessment_id", assessmentId);
+  if (error) throw new Error(error.message);
+  const existing = data ?? [];
+  if (!existing.some((row) => row.id === versionId)) {
+    throw new Error("Version not found.");
+  }
+  if (existing.length <= 1) {
+    throw new Error("The only remaining version cannot be deleted.");
+  }
+  const { error: deleteError } = await supabase
+    .from("assessment_versions")
+    .delete()
+    .eq("id", versionId)
+    .eq("assessment_id", assessmentId);
+  if (deleteError) throw new Error(deleteError.message);
+  await supabase.from("assessments").update({ updated_at: new Date().toISOString() }).eq("id", assessmentId);
+}
+
 export async function saveScopeSelections(
   assessmentId: string,
   versionId: string,
@@ -589,6 +645,7 @@ export async function listAssessmentCollaborators(assessmentId: string): Promise
     userId: row.user_id,
     email: row.email,
     role: isAssessmentRole(row.role) ? row.role : "viewer",
+    versionId: null,
     invitedBy: row.invited_by,
     createdAt: new Date(row.created_at),
   }));
@@ -597,8 +654,12 @@ export async function listAssessmentCollaborators(assessmentId: string): Promise
 export async function addCollaboratorByEmail(
   assessmentId: string,
   email: string,
-  role: Exclude<AssessmentRole, "owner">
+  role: Exclude<AssessmentRole, "owner">,
+  versionId?: string | null
 ): Promise<void> {
+  if (versionId) {
+    throw new Error("Assigning a role to one version requires the Postgres database.");
+  }
   const access = await getAssessmentAccess(assessmentId);
   if (!access || !canManageCollaborators(access.myRole)) {
     throw new Error("Only the owner can add collaborators.");
@@ -644,9 +705,34 @@ export async function removeCollaborator(assessmentId: string, collaboratorRowId
   if (error) throw new Error(error.message);
 }
 
+function evidenceRequiresPostgres(): never {
+  throw new Error("Evidence requires the Postgres database.");
+}
+
+export async function loadEvidence(): Promise<never> {
+  evidenceRequiresPostgres();
+}
+
+export async function saveEvidence(): Promise<void> {
+  evidenceRequiresPostgres();
+}
+
+export async function addEvidenceFile(): Promise<never> {
+  evidenceRequiresPostgres();
+}
+
+export async function deleteEvidenceFile(): Promise<void> {
+  evidenceRequiresPostgres();
+}
+
+export async function readEvidenceFile(): Promise<never> {
+  evidenceRequiresPostgres();
+}
+
 export const assessmentRuntimeRepository: AssessmentRepository = {
   getAssessmentAccess,
   createAssessment,
+  updateAssessmentContext,
   deleteAssessment,
   getAssessmentById,
   listAssessments,
@@ -656,11 +742,17 @@ export const assessmentRuntimeRepository: AssessmentRepository = {
   loadAnswers,
   saveActionMetadata,
   loadActionMetadata,
+  loadEvidence,
+  saveEvidence,
+  addEvidenceFile,
+  deleteEvidenceFile,
+  readEvidenceFile,
   listAssessmentVersions,
   getLatestAssessmentVersion,
   getAssessmentVersion,
   createAssessmentVersion,
   updateAssessmentVersion,
+  deleteAssessmentVersion,
   listAssessmentCollaborators,
   addCollaboratorByEmail,
   updateCollaboratorRole,

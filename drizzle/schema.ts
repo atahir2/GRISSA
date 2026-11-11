@@ -40,6 +40,9 @@ export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
   fullName: text("full_name"),
   organisationName: text("organisation_name"),
+  organisationSize: text("organisation_size"),
+  industry: text("industry"),
+  country: text("country"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -111,6 +114,8 @@ export const assessments = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     organisationName: text("organisation_name").notNull(),
+    industry: text("industry"),
+    operatingModel: text("operating_model"),
     ownerUserId: uuid("owner_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -158,6 +163,7 @@ export const assessmentCollaborators = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     role: collaboratorRoleEnum("role").notNull(),
+    versionId: uuid("version_id").references(() => assessmentVersions.id, { onDelete: "cascade" }),
     invitedBy: uuid("invited_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -165,10 +171,7 @@ export const assessmentCollaborators = pgTable(
   (table) => ({
     assessmentIdx: index("idx_assessment_collaborators_assessment_id").on(table.assessmentId),
     userIdx: index("idx_assessment_collaborators_user_id").on(table.userId),
-    assessmentUserUnique: uniqueIndex("uq_assessment_collaborators_assessment_user").on(
-      table.assessmentId,
-      table.userId
-    ),
+    versionIdx: index("idx_assessment_collaborators_version_id").on(table.versionId),
   })
 );
 
@@ -257,6 +260,53 @@ export const assessmentActionItems = pgTable(
       table.versionId,
       table.questionId
     ),
+  })
+);
+
+export const assessmentQuestionEvidence = pgTable(
+  "assessment_question_evidence",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assessmentId: uuid("assessment_id")
+      .notNull()
+      .references(() => assessments.id, { onDelete: "cascade" }),
+    versionId: uuid("version_id")
+      .notNull()
+      .references(() => assessmentVersions.id, { onDelete: "cascade" }),
+    questionId: text("question_id").notNull(),
+    notes: text("notes").notNull().default(""),
+    presentKeys: text("present_keys").array().notNull().default(sql`ARRAY[]::text[]`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    versionIdx: index("idx_assessment_question_evidence_version_id").on(table.versionId),
+    versionQuestionUnique: uniqueIndex("uq_question_evidence_version_question").on(
+      table.versionId,
+      table.questionId
+    ),
+  })
+);
+
+export const assessmentEvidenceFiles = pgTable(
+  "assessment_evidence_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assessmentId: uuid("assessment_id")
+      .notNull()
+      .references(() => assessments.id, { onDelete: "cascade" }),
+    versionId: uuid("version_id")
+      .notNull()
+      .references(() => assessmentVersions.id, { onDelete: "cascade" }),
+    questionId: text("question_id").notNull(),
+    originalName: text("original_name").notNull(),
+    storedName: text("stored_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    versionIdx: index("idx_assessment_evidence_files_version_id").on(table.versionId),
   })
 );
 

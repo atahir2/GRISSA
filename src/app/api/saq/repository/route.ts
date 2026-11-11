@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import type { AssessmentAnswer, ScopeSelection } from "@/src/lib/saq/assessment.types";
+import type { AssessmentAnswer, QuestionEvidence, ScopeSelection } from "@/src/lib/saq/assessment.types";
 import type { AssessmentRole } from "@/src/lib/saq/permissions";
-import type { ActionMetadata, AssessmentVersionUpdate } from "@/src/lib/saq/repositories/assessment.repository.interface";
+import type {
+  ActionMetadata,
+  AssessmentContextUpdate,
+  AssessmentVersionUpdate,
+} from "@/src/lib/saq/repositories/assessment.repository.interface";
 import { getAssessmentRuntimeRepository } from "@/src/lib/saq/repositories/assessment.repository.selector";
 
 type Body = {
@@ -16,6 +20,12 @@ export async function POST(request: Request) {
     switch (action) {
       case "createAssessment":
         return NextResponse.json(await repo.createAssessment(String(payload?.organisationName ?? "")));
+      case "updateAssessmentContext":
+        await repo.updateAssessmentContext(
+          String(payload?.assessmentId ?? ""),
+          (payload?.patch as AssessmentContextUpdate) ?? {}
+        );
+        return NextResponse.json({ ok: true });
       case "deleteAssessment":
         await repo.deleteAssessment(String(payload?.assessmentId ?? ""));
         return NextResponse.json({ ok: true });
@@ -62,6 +72,17 @@ export async function POST(request: Request) {
             String(payload?.versionId ?? "")
           )
         );
+      case "loadEvidence":
+        return NextResponse.json(
+          await repo.loadEvidence(String(payload?.assessmentId ?? ""), String(payload?.versionId ?? ""))
+        );
+      case "saveEvidence":
+        await repo.saveEvidence(
+          String(payload?.assessmentId ?? ""),
+          String(payload?.versionId ?? ""),
+          (payload?.questions as QuestionEvidence[]) ?? []
+        );
+        return NextResponse.json({ ok: true });
       case "getAssessmentAccess":
         return NextResponse.json(await repo.getAssessmentAccess(String(payload?.assessmentId ?? "")));
       case "listAssessmentVersions":
@@ -89,13 +110,20 @@ export async function POST(request: Request) {
           (payload?.patch as AssessmentVersionUpdate) ?? {}
         );
         return NextResponse.json({ ok: true });
+      case "deleteAssessmentVersion":
+        await repo.deleteAssessmentVersion(
+          String(payload?.assessmentId ?? ""),
+          String(payload?.versionId ?? "")
+        );
+        return NextResponse.json({ ok: true });
       case "listAssessmentCollaborators":
         return NextResponse.json(await repo.listAssessmentCollaborators(String(payload?.assessmentId ?? "")));
       case "addCollaboratorByEmail":
         await repo.addCollaboratorByEmail(
           String(payload?.assessmentId ?? ""),
           String(payload?.email ?? ""),
-          String(payload?.role ?? "viewer") as Exclude<AssessmentRole, "owner">
+          String(payload?.role ?? "viewer") as Exclude<AssessmentRole, "owner">,
+          payload?.versionId ? String(payload.versionId) : null
         );
         return NextResponse.json({ ok: true });
       case "updateCollaboratorRole":

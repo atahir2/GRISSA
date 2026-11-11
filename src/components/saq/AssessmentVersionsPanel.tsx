@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AssessmentVersion } from "@/src/lib/saq/assessment.types";
 import {
   canCreateAssessmentVersion,
+  canDeleteAssessment,
   canEditAssessment,
   type AssessmentRole,
   type AssessmentVersionStatus,
 } from "@/src/lib/saq/permissions";
 import {
   createAssessmentVersion,
+  deleteAssessmentVersion,
   updateAssessmentVersion,
 } from "@/src/lib/saq/assessment.repository";
 
@@ -43,9 +45,15 @@ export function AssessmentVersionsPanel({
 }: AssessmentVersionsPanelProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [labelDraft, setLabelDraft] = useState(currentVersion?.label ?? "");
+
+  useEffect(() => {
+    setLabelDraft(currentVersion?.label ?? "");
+  }, [currentVersion?.id, currentVersion?.label]);
 
   const canCreate = canCreateAssessmentVersion(myRole);
   const canEditMeta = canEditAssessment(myRole);
+  const canDeleteVersion = canDeleteAssessment(myRole) && versions.length > 1;
 
   const handleCreate = async () => {
     const label = window.prompt(
@@ -60,6 +68,43 @@ export function AssessmentVersionsPanel({
       onSelectVersion(v.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create version.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRename = async () => {
+    if (!currentVersionId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateAssessmentVersion(assessmentId, currentVersionId, {
+        label: labelDraft.trim() || null,
+      });
+      await onVersionsChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not rename version.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!currentVersionId || !currentVersion) return;
+    const label = currentVersion.label ? ` (${currentVersion.label})` : "";
+    const confirmed = window.confirm(
+      `Delete version v${currentVersion.versionNumber}${label}?\n\nIts scope, answers, and action plan for this version will be removed.`
+    );
+    if (!confirmed) return;
+    const fallback = versions.find((version) => version.id !== currentVersionId);
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteAssessmentVersion(assessmentId, currentVersionId);
+      await onVersionsChanged();
+      if (fallback) onSelectVersion(fallback.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete version.");
     } finally {
       setBusy(false);
     }
@@ -140,6 +185,37 @@ export function AssessmentVersionsPanel({
                 ))}
               </select>
             </label>
+          )}
+          {canEditMeta && currentVersion && (
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Name</span>
+              <input
+                value={labelDraft}
+                disabled={busy}
+                onChange={(e) => setLabelDraft(e.target.value)}
+                placeholder="Version name"
+                aria-label="Version name"
+                className="w-40 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handleRename}
+                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Rename
+              </button>
+            </label>
+          )}
+          {canDeleteVersion && currentVersion && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handleDelete}
+              className="inline-flex items-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            >
+              Delete version
+            </button>
           )}
           {canCreate && showCreateButton && (
             <button

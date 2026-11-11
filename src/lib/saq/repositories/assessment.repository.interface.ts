@@ -5,6 +5,9 @@ import type {
   AssessmentCollaborator,
   AssessmentListItem,
   AssessmentVersion,
+  EvidenceFileRecord,
+  EvidenceState,
+  QuestionEvidence,
   ScopeSelection,
 } from "../assessment.types";
 import type { AssessmentRole, AssessmentVersionStatus } from "../permissions";
@@ -24,6 +27,7 @@ export type ActionMetadata = {
  */
 export interface AssessmentRuntimeRepository {
   createAssessment(organisationName: string): Promise<Assessment>;
+  updateAssessmentContext(assessmentId: string, patch: AssessmentContextUpdate): Promise<void>;
   deleteAssessment(assessmentId: string): Promise<void>;
   getAssessmentById(assessmentId: string): Promise<Assessment | null>;
   listAssessments(): Promise<AssessmentListItem[]>;
@@ -41,7 +45,22 @@ export interface AssessmentRuntimeRepository {
     actionMetadataByQuestionId: Record<string, ActionMetadata>
   ): Promise<void>;
   loadActionMetadata(assessmentId: string, versionId: string): Promise<Record<string, ActionMetadata>>;
+  loadEvidence(assessmentId: string, versionId: string): Promise<EvidenceState>;
+  saveEvidence(assessmentId: string, versionId: string, questions: QuestionEvidence[]): Promise<void>;
+  addEvidenceFile(
+    assessmentId: string,
+    versionId: string,
+    questionId: string,
+    file: { fileName: string; bytes: Buffer }
+  ): Promise<EvidenceFileRecord>;
+  deleteEvidenceFile(fileId: string): Promise<void>;
+  readEvidenceFile(fileId: string): Promise<{ record: EvidenceFileRecord; bytes: Buffer }>;
 }
+
+export type AssessmentContextUpdate = {
+  industry?: string | null;
+  operatingModel?: string | null;
+};
 
 export type AssessmentVersionUpdate = {
   label?: string | null;
@@ -59,11 +78,13 @@ export interface AssessmentRepository extends AssessmentRuntimeRepository {
     versionId: string,
     patch: AssessmentVersionUpdate
   ): Promise<void>;
+  deleteAssessmentVersion(assessmentId: string, versionId: string): Promise<void>;
   listAssessmentCollaborators(assessmentId: string): Promise<AssessmentCollaborator[]>;
   addCollaboratorByEmail(
     assessmentId: string,
     email: string,
-    role: Exclude<AssessmentRole, "owner">
+    role: Exclude<AssessmentRole, "owner">,
+    versionId?: string | null
   ): Promise<void>;
   updateCollaboratorRole(
     assessmentId: string,

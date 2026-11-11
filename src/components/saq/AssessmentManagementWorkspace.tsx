@@ -177,7 +177,11 @@ export function AssessmentManagementWorkspace({ assessmentId }: AssessmentManage
           />
         </section>
 
-        <AssessmentCollaboratorsPanel assessmentId={assessmentId} myRole={myRole} />
+        <AssessmentCollaboratorsPanel
+          assessmentId={assessmentId}
+          myRole={myRole}
+          versions={versions}
+        />
       </div>
     </main>
   );

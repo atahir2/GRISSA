@@ -1,15 +1,20 @@
-import { and, asc, desc, eq, or } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, or } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import {
   assessmentActionItems,
   assessmentAnswers,
   assessmentCollaborators,
+  assessmentEvidenceFiles,
+  assessmentQuestionEvidence,
   assessments,
   assessmentScopeSelections,
   assessmentVersions,
+  profiles,
   users,
 } from "../../../../drizzle/schema";
 import { getDb } from "@/src/lib/db/drizzle";
 import { requireCurrentUserId } from "@/src/lib/auth/current-user";
+import { isIndustry, isOperatingModel } from "@/src/lib/auth/organisation-profile";
 import type {
   Assessment,
   AssessmentAccess,
@@ -17,6 +22,9 @@ import type {
   AssessmentCollaborator,
   AssessmentListItem,
   AssessmentVersion,
+  EvidenceFileRecord,
+  EvidenceState,
+  QuestionEvidence,
   ScopeSelection,
 } from "../assessment.types";
 import {
@@ -25,12 +33,26 @@ import {
   canEditAssessment,
   canManageCollaborators,
   canViewAssessment,
+  isAssignableCollaboratorRole,
   isAssessmentRole,
   isAssessmentVersionStatus,
   type AssessmentRole,
 } from "../permissions";
+import { getQuestionById } from "../questionnaire.repository";
+import { evidenceItemKey } from "../engine/evidence";
+import {
+  displayFileName,
+  evidenceContentType,
+  evidenceExtension,
+  readEvidenceBytes,
+  removeEvidenceFile,
+  removeEvidenceTree,
+  writeEvidenceBytes,
+  EVIDENCE_MAX_BYTES,
+} from "../evidence-storage";
 import type {
   ActionMetadata,
+  AssessmentContextUpdate,
   AssessmentRepository,
   AssessmentVersionUpdate,
 } from "./assessment.repository.interface";
@@ -39,6 +61,8 @@ function toAssessment(row: typeof assessments.$inferSelect): Assessment {
   return {
     id: row.id,
     organisationName: row.organisationName,
+    industry: row.industry,
+    operatingModel: row.operatingModel,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -68,11 +92,20 @@ async function requireAssessmentVersion(assessmentId: string, versionId: string)
   if (!row) {
     throw new Error("Version not found for this assessment.");
   }
+  return row;
 }
+
+const ROLE_RANK: Record<AssessmentRole, number> = {
+  owner: 4,
+  editor: 3,
+  reviewer: 2,
+  viewer: 1,
+};
 
 async function getAssessmentAccessRole(
   assessmentId: string,
-  userId: string
+  userId: string,
+  versionId?: string | null
 ): Promise<AssessmentRole | null> {
   const db = getDb();
   const [assessment] = await db
@@ -85,13 +118,24 @@ async function getAssessmentAccessRole(
   if (!assessment) return null;
   if (assessment.ownerUserId === userId) return "owner";
 
-  const [collaborator] = await db
-    .select({ role: assessmentCollaborators.role })
+  const rows = await db
+    .select({ role: assessmentCollaborators.role, versionId: assessmentCollaborators.versionId })
     .from(assessmentCollaborators)
-    .where(and(eq(assessmentCollaborators.assessmentId, assessmentId), eq(assessmentCollaborators.userId, userId)))
-    .limit(1);
-  if (!collaborator?.role || !isAssessmentRole(collaborator.role)) return null;
-  return collaborator.role;
+    .where(and(eq(assessmentCollaborators.assessmentId, assessmentId), eq(assessmentCollaborators.userId, userId)));
+
+  const roles = rows.filter((row) => isAssessmentRole(row.role));
+  if (versionId) {
+    const specific = roles.find((row) => row.versionId === versionId);
+    if (specific) return specific.role;
+    const general = roles.find((row) => row.versionId == null);
+    return general?.role ?? null;
+  }
+
+  let best: AssessmentRole | null = null;
+  for (const row of roles) {
+    if (!best || ROLE_RANK[row.role] > ROLE_RANK[best]) best = row.role;
+  }
+  return best;
 }
 
 export async function getAssessmentAccess(assessmentId: string): Promise<AssessmentAccess | null> {
@@ -108,32 +152,47 @@ export async function getAssessmentAccess(assessmentId: string): Promise<Assessm
   };
 }
 
-async function requireViewAccess(assessmentId: string) {
+async function requireViewAccess(assessmentId: string, versionId?: string | null) {
   const userId = await requireCurrentUserId();
-  const role = await getAssessmentAccessRole(assessmentId, userId);
+  const role = await getAssessmentAccessRole(assessmentId, userId, versionId);
   if (!role || !canViewAssessment(role)) {
     throw new Error("Assessment not found or access denied.");
   }
   return { userId, role };
 }
 
-async function requireEditAccess(assessmentId: string) {
+async function requireEditAccess(assessmentId: string, versionId?: string | null) {
   const userId = await requireCurrentUserId();
-  const role = await getAssessmentAccessRole(assessmentId, userId);
+  const role = await getAssessmentAccessRole(assessmentId, userId, versionId);
   if (!role || !canEditAssessment(role)) {
     throw new Error("You do not have permission to edit this assessment.");
   }
   return { userId, role };
 }
 
+async function requireDraftEdit(assessmentId: string, versionId: string) {
+  const access = await requireEditAccess(assessmentId, versionId);
+  const version = await requireAssessmentVersion(assessmentId, versionId);
+  if (version.status !== "draft") {
+    throw new Error("Only a draft version can be edited.");
+  }
+  return access;
+}
+
 export async function createAssessment(organisationName: string): Promise<Assessment> {
   const db = getDb();
   const ownerUserId = await requireCurrentUserId();
+  const [profile] = await db
+    .select({ industry: profiles.industry })
+    .from(profiles)
+    .where(eq(profiles.id, ownerUserId))
+    .limit(1);
   const [created] = await db
     .insert(assessments)
     .values({
       organisationName,
       ownerUserId,
+      industry: profile?.industry ?? null,
     })
     .returning();
   if (!created) {
@@ -158,6 +217,26 @@ export async function createAssessment(organisationName: string): Promise<Assess
   return toAssessment(created);
 }
 
+export async function updateAssessmentContext(
+  assessmentId: string,
+  patch: AssessmentContextUpdate
+): Promise<void> {
+  await requireEditAccess(assessmentId);
+  if (patch.industry && !isIndustry(patch.industry)) {
+    throw new Error("Select a known industry.");
+  }
+  if (patch.operatingModel && !isOperatingModel(patch.operatingModel)) {
+    throw new Error("Select a known operating model.");
+  }
+  const updates: { industry?: string | null; operatingModel?: string | null; updatedAt: Date } = {
+    updatedAt: new Date(),
+  };
+  if ("industry" in patch) updates.industry = patch.industry ?? null;
+  if ("operatingModel" in patch) updates.operatingModel = patch.operatingModel ?? null;
+  const db = getDb();
+  await db.update(assessments).set(updates).where(eq(assessments.id, assessmentId));
+}
+
 export async function deleteAssessment(assessmentId: string): Promise<void> {
   const { userId, role } = await requireViewAccess(assessmentId);
   if (!canDeleteAssessment(role)) {
@@ -167,6 +246,7 @@ export async function deleteAssessment(assessmentId: string): Promise<void> {
   await db
     .delete(assessments)
     .where(and(eq(assessments.id, assessmentId), eq(assessments.ownerUserId, userId)));
+  await removeEvidenceTree(assessmentId).catch(() => undefined);
 }
 
 export async function getAssessmentById(assessmentId: string): Promise<Assessment | null> {
@@ -214,9 +294,8 @@ export async function saveScopeSelections(
   versionId: string,
   scopeSelections: ScopeSelection[]
 ): Promise<void> {
-  await requireEditAccess(assessmentId);
+  await requireDraftEdit(assessmentId, versionId);
   const db = getDb();
-  await requireAssessmentVersion(assessmentId, versionId);
   for (const s of scopeSelections) {
     await db
       .insert(assessmentScopeSelections)
@@ -243,7 +322,7 @@ export async function loadScopeSelections(
   assessmentId: string,
   versionId: string
 ): Promise<ScopeSelection[]> {
-  await requireViewAccess(assessmentId);
+  await requireViewAccess(assessmentId, versionId);
   const db = getDb();
   await requireAssessmentVersion(assessmentId, versionId);
   const rows = await db
@@ -265,9 +344,8 @@ export async function saveAnswers(
   versionId: string,
   answers: AssessmentAnswer[]
 ): Promise<void> {
-  await requireEditAccess(assessmentId);
+  await requireDraftEdit(assessmentId, versionId);
   const db = getDb();
-  await requireAssessmentVersion(assessmentId, versionId);
   for (const a of answers) {
     await db
       .insert(assessmentAnswers)
@@ -289,7 +367,7 @@ export async function saveAnswers(
 }
 
 export async function loadAnswers(assessmentId: string, versionId: string): Promise<AssessmentAnswer[]> {
-  await requireViewAccess(assessmentId);
+  await requireViewAccess(assessmentId, versionId);
   const db = getDb();
   await requireAssessmentVersion(assessmentId, versionId);
   const rows = await db
@@ -310,9 +388,8 @@ export async function saveActionMetadata(
   versionId: string,
   actionMetadataByQuestionId: Record<string, ActionMetadata>
 ): Promise<void> {
-  await requireEditAccess(assessmentId);
+  await requireDraftEdit(assessmentId, versionId);
   const db = getDb();
-  await requireAssessmentVersion(assessmentId, versionId);
   for (const [questionId, m] of Object.entries(actionMetadataByQuestionId)) {
     await db
       .insert(assessmentActionItems)
@@ -345,7 +422,7 @@ export async function loadActionMetadata(
   assessmentId: string,
   versionId: string
 ): Promise<Record<string, ActionMetadata>> {
-  await requireViewAccess(assessmentId);
+  await requireViewAccess(assessmentId, versionId);
   const db = getDb();
   await requireAssessmentVersion(assessmentId, versionId);
   const rows = await db
@@ -367,14 +444,22 @@ export async function loadActionMetadata(
 }
 
 export async function listAssessmentVersions(assessmentId: string): Promise<AssessmentVersion[]> {
-  await requireViewAccess(assessmentId);
+  const { userId, role } = await requireViewAccess(assessmentId);
   const db = getDb();
   const rows = await db
     .select()
     .from(assessmentVersions)
     .where(eq(assessmentVersions.assessmentId, assessmentId))
     .orderBy(asc(assessmentVersions.versionNumber));
-  return rows.map(toVersion);
+  if (role === "owner") return rows.map(toVersion);
+
+  const grants = await db
+    .select({ versionId: assessmentCollaborators.versionId })
+    .from(assessmentCollaborators)
+    .where(and(eq(assessmentCollaborators.assessmentId, assessmentId), eq(assessmentCollaborators.userId, userId)));
+  if (grants.some((grant) => grant.versionId == null)) return rows.map(toVersion);
+  const allowed = new Set(grants.map((grant) => grant.versionId).filter((id): id is string => Boolean(id)));
+  return rows.filter((row) => allowed.has(row.id)).map(toVersion);
 }
 
 export async function getLatestAssessmentVersion(
@@ -395,7 +480,7 @@ export async function getAssessmentVersion(
   assessmentId: string,
   versionId: string
 ): Promise<AssessmentVersion | null> {
-  await requireViewAccess(assessmentId);
+  await requireViewAccess(assessmentId, versionId);
   const db = getDb();
   const [row] = await db
     .select()
@@ -497,7 +582,7 @@ export async function updateAssessmentVersion(
   versionId: string,
   patch: AssessmentVersionUpdate
 ): Promise<void> {
-  await requireEditAccess(assessmentId);
+  await requireEditAccess(assessmentId, versionId);
   await requireAssessmentVersion(assessmentId, versionId);
   const db = getDb();
   const updates: { label?: string | null; status?: typeof assessmentVersions.$inferInsert.status } = {};
@@ -511,6 +596,29 @@ export async function updateAssessmentVersion(
   await db.update(assessments).set({ updatedAt: new Date() }).where(eq(assessments.id, assessmentId));
 }
 
+export async function deleteAssessmentVersion(assessmentId: string, versionId: string): Promise<void> {
+  const { role } = await requireViewAccess(assessmentId);
+  if (!canDeleteAssessment(role)) {
+    throw new Error("Only the owner can delete a version.");
+  }
+  const db = getDb();
+  const existing = await db
+    .select({ id: assessmentVersions.id })
+    .from(assessmentVersions)
+    .where(eq(assessmentVersions.assessmentId, assessmentId));
+  if (!existing.some((row) => row.id === versionId)) {
+    throw new Error("Version not found.");
+  }
+  if (existing.length <= 1) {
+    throw new Error("The only remaining version cannot be deleted.");
+  }
+  await db
+    .delete(assessmentVersions)
+    .where(and(eq(assessmentVersions.id, versionId), eq(assessmentVersions.assessmentId, assessmentId)));
+  await db.update(assessments).set({ updatedAt: new Date() }).where(eq(assessments.id, assessmentId));
+  await removeEvidenceTree(assessmentId, versionId).catch(() => undefined);
+}
+
 export async function listAssessmentCollaborators(
   assessmentId: string
 ): Promise<AssessmentCollaborator[]> {
@@ -521,9 +629,11 @@ export async function listAssessmentCollaborators(
       id: assessmentCollaborators.id,
       userId: assessmentCollaborators.userId,
       role: assessmentCollaborators.role,
+      versionId: assessmentCollaborators.versionId,
       invitedBy: assessmentCollaborators.invitedBy,
       createdAt: assessmentCollaborators.createdAt,
       email: users.email,
+      name: users.name,
     })
     .from(assessmentCollaborators)
     .innerJoin(users, eq(users.id, assessmentCollaborators.userId))
@@ -534,7 +644,9 @@ export async function listAssessmentCollaborators(
     id: row.id,
     userId: row.userId,
     email: row.email,
+    name: row.name,
     role: isAssessmentRole(row.role) ? row.role : "viewer",
+    versionId: row.versionId,
     invitedBy: row.invitedBy,
     createdAt: row.createdAt,
   }));
@@ -543,14 +655,22 @@ export async function listAssessmentCollaborators(
 export async function addCollaboratorByEmail(
   assessmentId: string,
   email: string,
-  role: Exclude<AssessmentRole, "owner">
+  role: Exclude<AssessmentRole, "owner">,
+  versionId?: string | null
 ): Promise<void> {
   const { userId, role: myRole } = await requireEditAccess(assessmentId);
   if (!canManageCollaborators(myRole)) {
     throw new Error("Only the owner can add collaborators.");
   }
+  if (!isAssignableCollaboratorRole(role)) {
+    throw new Error("Role must be editor, reviewer, or viewer.");
+  }
   const db = getDb();
   const normalizedEmail = email.trim().toLowerCase();
+  const scopedVersionId = versionId?.trim() ? versionId : null;
+  if (scopedVersionId) {
+    await requireAssessmentVersion(assessmentId, scopedVersionId);
+  }
   const [target] = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
   if (!target) {
     throw new Error("user not found for this email");
@@ -558,22 +678,32 @@ export async function addCollaboratorByEmail(
   if (target.id === userId) {
     throw new Error("owner already has access");
   }
-  await db
-    .insert(assessmentCollaborators)
-    .values({
-      assessmentId,
-      userId: target.id,
-      role,
-      invitedBy: userId,
-    })
-    .onConflictDoUpdate({
-      target: [assessmentCollaborators.assessmentId, assessmentCollaborators.userId],
-      set: {
-        role,
-        invitedBy: userId,
-        updatedAt: new Date(),
-      },
-    });
+  const existingWhere = and(
+    eq(assessmentCollaborators.assessmentId, assessmentId),
+    eq(assessmentCollaborators.userId, target.id),
+    scopedVersionId
+      ? eq(assessmentCollaborators.versionId, scopedVersionId)
+      : isNull(assessmentCollaborators.versionId)
+  );
+  const [existing] = await db
+    .select({ id: assessmentCollaborators.id })
+    .from(assessmentCollaborators)
+    .where(existingWhere)
+    .limit(1);
+  if (existing) {
+    await db
+      .update(assessmentCollaborators)
+      .set({ role, invitedBy: userId, updatedAt: new Date() })
+      .where(eq(assessmentCollaborators.id, existing.id));
+    return;
+  }
+  await db.insert(assessmentCollaborators).values({
+    assessmentId,
+    userId: target.id,
+    role,
+    versionId: scopedVersionId,
+    invitedBy: userId,
+  });
 }
 
 export async function updateCollaboratorRole(
@@ -584,6 +714,9 @@ export async function updateCollaboratorRole(
   const { role: myRole } = await requireEditAccess(assessmentId);
   if (!canManageCollaborators(myRole)) {
     throw new Error("Only the owner can change collaborator roles.");
+  }
+  if (!isAssignableCollaboratorRole(role)) {
+    throw new Error("Role must be editor, reviewer, or viewer.");
   }
   const db = getDb();
   await db
@@ -612,9 +745,175 @@ export async function removeCollaborator(assessmentId: string, collaboratorRowId
     .where(and(eq(assessmentCollaborators.id, collaboratorRowId), eq(assessmentCollaborators.assessmentId, assessmentId)));
 }
 
+const NOTES_MAX = 4000;
+
+function allowedEvidenceKeys(questionId: string): Set<string> {
+  const question = getQuestionById(questionId);
+  if (!question) {
+    throw new Error("Unknown question.");
+  }
+  return new Set(
+    (question.commonEvidence ?? [])
+      .filter((item) => item.text.trim().length > 0)
+      .map((item) => evidenceItemKey(item.supportsLevel, item.text)),
+  );
+}
+
+export async function loadEvidence(assessmentId: string, versionId: string): Promise<EvidenceState> {
+  await requireViewAccess(assessmentId, versionId);
+  const db = getDb();
+  await requireAssessmentVersion(assessmentId, versionId);
+  const [questionRows, fileRows] = await Promise.all([
+    db
+      .select()
+      .from(assessmentQuestionEvidence)
+      .where(
+        and(
+          eq(assessmentQuestionEvidence.assessmentId, assessmentId),
+          eq(assessmentQuestionEvidence.versionId, versionId),
+        ),
+      ),
+    db
+      .select()
+      .from(assessmentEvidenceFiles)
+      .where(
+        and(eq(assessmentEvidenceFiles.assessmentId, assessmentId), eq(assessmentEvidenceFiles.versionId, versionId)),
+      )
+      .orderBy(asc(assessmentEvidenceFiles.createdAt)),
+  ]);
+  return {
+    questions: questionRows.map((row) => ({
+      questionId: row.questionId,
+      notes: row.notes,
+      presentKeys: row.presentKeys ?? [],
+    })),
+    files: fileRows.map((row) => ({
+      id: row.id,
+      questionId: row.questionId,
+      fileName: row.originalName,
+      contentType: row.contentType,
+      sizeBytes: row.sizeBytes,
+    })),
+  };
+}
+
+export async function saveEvidence(
+  assessmentId: string,
+  versionId: string,
+  questions: QuestionEvidence[],
+): Promise<void> {
+  await requireDraftEdit(assessmentId, versionId);
+  const db = getDb();
+  for (const item of questions) {
+    const allowed = allowedEvidenceKeys(item.questionId);
+    const presentKeys = [...new Set(item.presentKeys.filter((key) => allowed.has(key)))];
+    const notes = item.notes.trim().slice(0, NOTES_MAX);
+    await db
+      .insert(assessmentQuestionEvidence)
+      .values({
+        assessmentId,
+        versionId,
+        questionId: item.questionId,
+        notes,
+        presentKeys,
+      })
+      .onConflictDoUpdate({
+        target: [assessmentQuestionEvidence.versionId, assessmentQuestionEvidence.questionId],
+        set: {
+          notes,
+          presentKeys,
+          updatedAt: new Date(),
+        },
+      });
+  }
+  await db.update(assessments).set({ updatedAt: new Date() }).where(eq(assessments.id, assessmentId));
+}
+
+export async function addEvidenceFile(
+  assessmentId: string,
+  versionId: string,
+  questionId: string,
+  file: { fileName: string; bytes: Buffer },
+): Promise<EvidenceFileRecord> {
+  await requireDraftEdit(assessmentId, versionId);
+  if (!getQuestionById(questionId)) {
+    throw new Error("Unknown question.");
+  }
+  if (file.bytes.length === 0 || file.bytes.length > EVIDENCE_MAX_BYTES) {
+    throw new Error("Evidence files must be under 10 MB.");
+  }
+  const extension = evidenceExtension(file.fileName);
+  const id = randomUUID();
+  const storedName = `${id}${extension}`;
+  const contentType = evidenceContentType(extension);
+  const originalName = displayFileName(file.fileName);
+  await writeEvidenceBytes(assessmentId, versionId, storedName, file.bytes);
+  try {
+    const db = getDb();
+    await db.insert(assessmentEvidenceFiles).values({
+      id,
+      assessmentId,
+      versionId,
+      questionId,
+      originalName,
+      storedName,
+      contentType,
+      sizeBytes: file.bytes.length,
+    });
+  } catch (error) {
+    await removeEvidenceFile(assessmentId, versionId, storedName).catch(() => undefined);
+    throw error;
+  }
+  return {
+    id,
+    questionId,
+    fileName: originalName,
+    contentType,
+    sizeBytes: file.bytes.length,
+  };
+}
+
+export async function deleteEvidenceFile(fileId: string): Promise<void> {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(assessmentEvidenceFiles)
+    .where(eq(assessmentEvidenceFiles.id, fileId))
+    .limit(1);
+  if (!row) return;
+  await requireDraftEdit(row.assessmentId, row.versionId);
+  await db.delete(assessmentEvidenceFiles).where(eq(assessmentEvidenceFiles.id, fileId));
+  await removeEvidenceFile(row.assessmentId, row.versionId, row.storedName).catch(() => undefined);
+}
+
+export async function readEvidenceFile(fileId: string): Promise<{ record: EvidenceFileRecord; bytes: Buffer }> {
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(assessmentEvidenceFiles)
+    .where(eq(assessmentEvidenceFiles.id, fileId))
+    .limit(1);
+  if (!row) {
+    throw new Error("Evidence file not found.");
+  }
+  await requireViewAccess(row.assessmentId, row.versionId);
+  const bytes = await readEvidenceBytes(row.assessmentId, row.versionId, row.storedName);
+  return {
+    record: {
+      id: row.id,
+      questionId: row.questionId,
+      fileName: row.originalName,
+      contentType: row.contentType,
+      sizeBytes: row.sizeBytes,
+    },
+    bytes,
+  };
+}
+
 export const assessmentRuntimeRepository: AssessmentRepository = {
   getAssessmentAccess,
   createAssessment,
+  updateAssessmentContext,
   deleteAssessment,
   getAssessmentById,
   listAssessments,
@@ -624,11 +923,17 @@ export const assessmentRuntimeRepository: AssessmentRepository = {
   loadAnswers,
   saveActionMetadata,
   loadActionMetadata,
+  loadEvidence,
+  saveEvidence,
+  addEvidenceFile,
+  deleteEvidenceFile,
+  readEvidenceFile,
   listAssessmentVersions,
   getLatestAssessmentVersion,
   getAssessmentVersion,
   createAssessmentVersion,
   updateAssessmentVersion,
+  deleteAssessmentVersion,
   listAssessmentCollaborators,
   addCollaboratorByEmail,
   updateCollaboratorRole,

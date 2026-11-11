@@ -37,17 +37,20 @@ function formatJoinedDate(value: Date | string): string {
 interface AssessmentCollaboratorsPanelProps {
   assessmentId: string;
   myRole: AssessmentRole;
+  versions?: Array<{ id: string; versionNumber: number; label: string | null }>;
 }
 
 export function AssessmentCollaboratorsPanel({
   assessmentId,
   myRole,
+  versions = [],
 }: AssessmentCollaboratorsPanelProps) {
   const [rows, setRows] = useState<AssessmentCollaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [addRole, setAddRole] = useState<Exclude<AssessmentRole, "owner">>("editor");
+  const [versionScope, setVersionScope] = useState("");
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -82,7 +85,7 @@ export function AssessmentCollaboratorsPanel({
     setAdding(true);
     setError(null);
     try {
-      await addCollaboratorByEmail(assessmentId, em, addRole);
+      await addCollaboratorByEmail(assessmentId, em, addRole, versionScope || null);
       setEmail("");
       await refresh();
     } catch (err) {
@@ -130,7 +133,7 @@ export function AssessmentCollaboratorsPanel({
           Team &amp; access
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          People who can view or edit this assessment. The owner can invite others by email (they must already have an account).
+          The owner invites people by email. Choose all versions, or one draft, so a reviewer of version 1 does not automatically see version 2. They need an account first.
         </p>
       </div>
       <div className="px-4 py-4 sm:px-6">
@@ -172,6 +175,25 @@ export function AssessmentCollaboratorsPanel({
                 ))}
               </select>
             </div>
+            <div>
+              <label htmlFor="collab-version" className="block text-xs font-medium text-slate-700">
+                Applies to
+              </label>
+              <select
+                id="collab-version"
+                value={versionScope}
+                onChange={(e) => setVersionScope(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 sm:w-48"
+              >
+                <option value="">All versions</option>
+                {versions.map((version) => (
+                  <option key={version.id} value={version.id}>
+                    v{version.versionNumber}
+                    {version.label ? ` — ${version.label}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               type="submit"
               disabled={adding || !email.trim()}
@@ -198,6 +220,13 @@ export function AssessmentCollaboratorsPanel({
                   <p className="truncate text-sm font-medium text-slate-900">{row.email}</p>
                   <p className="mt-0.5 text-xs text-slate-500">
                     Joined {formatJoinedDate(row.createdAt)}
+                    {row.versionId
+                      ? ` · ${
+                          versions.find((version) => version.id === row.versionId)
+                            ? `v${versions.find((version) => version.id === row.versionId)?.versionNumber}`
+                            : "one version"
+                        }`
+                      : " · all versions"}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
