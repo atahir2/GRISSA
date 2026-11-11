@@ -8,7 +8,7 @@ export function ActionPlanSectionIntro() {
         Action Plan and Implementation Guidance
       </h2>
       <p className="mt-2 text-sm text-slate-600 print:text-xs">
-        Prioritised actions by theme to support sequencing and improvement planning.
+        Effort (S, M, L) is the size of the work. When to act (Immediate, Urgent, Planned) is calculated from importance, that effort, and the gap to target.
       </p>
     </div>
   );

@@ -12,7 +12,7 @@ import {
   loadAnswers,
   loadActionMetadata,
 } from "@/src/lib/saq/assessment.repository";
-import type { AssessmentRole } from "@/src/lib/saq/permissions";
+import { canExportReport, type AssessmentRole } from "@/src/lib/saq/permissions";
 import { useAssessmentVersionRoute } from "./useAssessmentVersionRoute";
 import type { ScopeSelection, AssessmentAnswer } from "@/src/lib/saq/engine/results";
 import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
@@ -31,6 +31,7 @@ import { ActionPlanSectionIntro } from "./ActionPlanSectionIntro";
 import { ReadinessHeroCard } from "./ReadinessHeroCard";
 import { StrengthsImprovementPanel } from "./StrengthsImprovementPanel";
 import { ThemeReadinessSnapshot } from "./ThemeReadinessSnapshot";
+import { TopicComparisonPanel } from "./TopicComparisonPanel";
 import { StrategicRecommendationsCard } from "./StrategicRecommendationsCard";
 
 interface AssessmentReportProps {
@@ -361,14 +362,16 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
                 >
                   View dashboard
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleExportPdf}
-                  disabled={exporting}
-                  className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60"
-                >
-                  {exporting ? "Exporting…" : "Export PDF"}
-                </button>
+                {canExportReport(myRole) && (
+                  <button
+                    type="button"
+                    onClick={handleExportPdf}
+                    disabled={exporting}
+                    className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60"
+                  >
+                    {exporting ? "Exporting…" : "Export PDF"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -423,6 +426,7 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
                 improvementAreas={interpretation.improvementAreas}
               />
               <ThemeReadinessSnapshot themes={assessmentResults.themeResults} />
+              <TopicComparisonPanel assessmentResults={assessmentResults} />
               <ReadinessLegend />
               <StrategicRecommendationsCard
                 recommendations={interpretation.strategicRecommendations}
@@ -497,17 +501,17 @@ export function AssessmentReport({ assessmentId }: AssessmentReportProps) {
                 icon="actions"
               />
               <ReportSummaryCard
-                label="Immediate"
+                label="When: Immediate"
                 value={actionSummary.immediateCount}
               />
-              <ReportSummaryCard label="Urgent" value={actionSummary.urgentCount} />
-              <ReportSummaryCard label="Planned" value={actionSummary.plannedCount} />
+              <ReportSummaryCard label="When: Urgent" value={actionSummary.urgentCount} />
+              <ReportSummaryCard label="When: Planned" value={actionSummary.plannedCount} />
               <ReportSummaryCard
-                label="Low priority"
+                label="When: low priority"
                 value={actionSummary.lowPriorityImplementationCount}
               />
               <ReportSummaryCard
-                label="No action needed"
+                label="When: no action"
                 value={actionSummary.noActionNeededCount}
               />
             </div>
