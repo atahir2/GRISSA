@@ -1,9 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { FULL_ASSESSMENT_TIME_LABEL } from "@/src/lib/auth/organisation-profile";
 import { assetUrl } from "@/src/lib/base-path";
 import { GrissaPageHeader } from "./GrissaPageHeader";
 
 export function SaqIntro() {
+  const { status } = useSession();
   return (
     <main className="min-h-0 flex-1 bg-transparent pb-12">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -72,13 +77,43 @@ export function SaqIntro() {
               </div>
             </section>
           </div>
-          <div className="mt-8">
-            <Link
-              href="/saq/manage"
-              className="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-            >
-              Proceed to Workspace
-            </Link>
+          <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4 rounded-2xl border-2 border-emerald-300 bg-white px-5 py-4 shadow-md shadow-emerald-100">
+              <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-emerald-600 text-white">
+                <span className="text-xl font-bold leading-none">45–60</span>
+                <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider">min</span>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Time to complete</p>
+                <p className="mt-1 text-base font-semibold text-slate-900">{FULL_ASSESSMENT_TIME_LABEL}</p>
+                <p className="mt-1 text-sm text-slate-600">One sitting for the full question set. A shorter scope takes less time.</p>
+              </div>
+            </div>
+          <div>
+            {status === "authenticated" ? (
+              <Link
+                href="/saq/manage"
+                className="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              >
+                Proceed to Workspace
+              </Link>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  Log in to open Workspace
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  Create an account
+                </Link>
+              </div>
+            )}
+          </div>
           </div>
         </section>
 

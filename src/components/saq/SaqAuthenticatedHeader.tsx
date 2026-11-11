@@ -103,16 +103,18 @@ export function SaqAuthenticatedHeader() {
           >
             Home
           </Link>
-          <Link
-            href="/saq/manage"
-            className={`rounded-md px-2.5 py-1 text-sm font-medium ${
-              workspaceActive
-                ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            }`}
-          >
-            Workspace
-          </Link>
+          {status === "authenticated" && (
+            <Link
+              href="/saq/manage"
+              className={`rounded-md px-2.5 py-1 text-sm font-medium ${
+                workspaceActive
+                  ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              Workspace
+            </Link>
+          )}
           {breadcrumbLabel && (
             <span className="max-w-[16rem] truncate rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 lg:max-w-[22rem]">
               {breadcrumbLabel}

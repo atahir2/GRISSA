@@ -2,6 +2,14 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/src/lib/db/drizzle";
+import { validateOrganisationProfile } from "@/src/lib/auth/organisation-profile";
+import { validatePassword } from "@/src/lib/auth/password-policy";
+import {
+  issueVerificationLink,
+  sendVerificationEmail,
+  smtpConfigured,
+  verificationLinkFingerprint,
+} from "@/src/lib/auth/verification-email";
 import { profiles, users } from "../../../../../drizzle/schema";
 
 export async function POST(request: Request) {
@@ -10,20 +18,38 @@ export async function POST(request: Request) {
       email?: string;
       password?: string;
       fullName?: string;
+      organisationName?: string;
+      organisationSize?: string;
+      industry?: string;
+      country?: string;
     };
 
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
     const fullName = String(body.fullName ?? "").trim();
+    const organisationName = String(body.organisationName ?? "").trim();
+    const organisationSize = String(body.organisationSize ?? "").trim();
+    const industry = String(body.industry ?? "").trim();
+    const country = String(body.country ?? "").trim();
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters." },
-        { status: 400 }
-      );
+    if (!fullName) {
+      return NextResponse.json({ error: "Full name is required." }, { status: 400 });
+    }
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
+    }
+    const profileError = validateOrganisationProfile({
+      organisationName,
+      organisationSize,
+      industry,
+      country,
+    });
+    if (profileError) {
+      return NextResponse.json({ error: profileError }, { status: 400 });
     }
 
     const db = getDb();
@@ -36,10 +62,10 @@ export async function POST(request: Request) {
     const [newUser] = await db
       .insert(users)
       .values({
-      email,
-      name: fullName || null,
-      passwordHash,
-      emailVerified: new Date(),
+        email,
+        name: fullName,
+        passwordHash,
+        emailVerified: null,
       })
       .returning({ id: users.id });
 
@@ -47,12 +73,39 @@ export async function POST(request: Request) {
       await db.insert(profiles).values({
         id: newUser.id,
         fullName,
+        organisationName,
+        organisationSize,
+        industry,
+        country,
       });
     }
 
-    return NextResponse.json({ ok: true });
+    const verificationUrl = await issueVerificationLink(email);
+    if (smtpConfigured()) {
+      try {
+        await sendVerificationEmail(email, verificationUrl);
+      } catch (error) {
+        console.error("Confirmation email failed", error);
+        return NextResponse.json(
+          {
+            error:
+              "The account was created, but the confirmation email could not be sent. Ask an operator to check SMTP settings.",
+          },
+          { status: 502 }
+        );
+      }
+      return NextResponse.json({ ok: true, emailSent: true });
+    }
+
+    console.warn(
+      `SMTP is not configured. Confirmation link fingerprint ${verificationLinkFingerprint(verificationUrl)} for ${email}`
+    );
+    return NextResponse.json({
+      ok: true,
+      emailSent: false,
+      verificationUrl,
+    });
   } catch {
     return NextResponse.json({ error: "Registration failed." }, { status: 500 });
   }
 }
-

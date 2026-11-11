@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { safeNextPath } from "@/src/lib/auth/safe-redirect";
 import { formatAuthErrorMessage } from "@/src/lib/auth/auth-errors";
+import { GoogleSignInButton } from "@/src/components/auth/GoogleSignInButton";
 
 interface LoginFormProps {
   nextPath?: string;
@@ -113,6 +114,7 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginForm
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
+        <GoogleSignInButton callbackUrl={nextPath || "/saq"} />
         <p className="mt-6 text-center text-sm text-slate-600">
           No account?{" "}
           <Link href="/signup" className="font-medium text-emerald-700 hover:text-emerald-800">

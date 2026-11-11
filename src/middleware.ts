@@ -51,7 +51,8 @@ export default async function middleware(request: NextRequest) {
   const needsAuth =
     pathname.startsWith("/saq/assessment") ||
     pathname.startsWith("/saq/dashboard") ||
-    pathname.startsWith("/saq/report");
+    pathname.startsWith("/saq/report") ||
+    pathname.startsWith("/saq/manage");
 
   if (!needsAuth) {
     return res;
@@ -78,12 +79,14 @@ export default async function middleware(request: NextRequest) {
   return res;
 }
 
-/** Only workflows that must be guarded (omit public /saq, login, signup to avoid breakage). */
+/** Workflows that require a session. Home, login, and signup stay public. */
 export const config = {
   matcher: [
     "/saq/assessment",
     "/saq/assessment/:path*",
     "/saq/dashboard/:path*",
     "/saq/report/:path*",
+    "/saq/manage",
+    "/saq/manage/:path*",
   ],
 };
