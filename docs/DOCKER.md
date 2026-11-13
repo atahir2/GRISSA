@@ -255,13 +255,20 @@ docker exec -w /app saq-app node -e \
 
 After **`DB_OK`**, retry sign-up and sign-in in the browser.
 
-## Confirmation email and Google sign-in
+## Confirmation email, password reset, Google, and ORCID
 
-New email accounts stay unverified until the person opens the confirmation link. That link marks the address confirmed and opens the login page.
+New email accounts stay unverified until the person opens the confirmation message. That link marks the address confirmed and opens the login page. The link is sent by email. Signup does not show it on screen.
 
-Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `EMAIL_FROM` in the env file mounted into `app`. When those values are missing, signup shows the confirmation link on screen so a local stack can still be tested.
+Set `SMTP_HOST` in the env file mounted into `app`. Also set `SMTP_PORT` (587 is typical), `SMTP_USER`, `SMTP_PASS` when the server requires a login, and `EMAIL_FROM` (for example `GRISSA <noreply@example.com>`). Without `SMTP_HOST`, signup and password reset cannot send mail. After changing these values, recreate the app container.
 
-Google sign-in appears on the login and signup pages when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set. The Google redirect URI is `{NEXTAUTH_URL}/api/auth/callback/google`.
+Forgot password is on the sign-in page. The reset link expires in one hour and opens `/reset-password`.
+
+Google and ORCID buttons are on the login and signup pages. Sign-in starts when the matching client id and secret are set:
+
+- Google redirect URI: `{NEXTAUTH_URL}/api/auth/callback/google` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
+- ORCID redirect URI: `{NEXTAUTH_URL}/api/auth/callback/orcid` (`ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET`)
+
+Public ORCID clients use `ORCID_SCOPES=openid` (the default) and usually do not share an email. The person then enters an address, and the confirmation message connects that ORCID iD. A member API client that may read email can set `ORCID_SCOPES=openid email`. Sandbox clients use `ORCID_ISSUER=https://sandbox.orcid.org`.
 
 ## Evidence files
 

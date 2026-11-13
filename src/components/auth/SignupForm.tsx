@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatAuthErrorMessage } from "@/src/lib/auth/auth-errors";
-import { GoogleSignInButton } from "@/src/components/auth/GoogleSignInButton";
+import { SsoButtons } from "@/src/components/auth/SsoButtons";
 import {
   COUNTRIES,
   INDUSTRIES,
@@ -31,8 +31,6 @@ export function SignupForm() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
-  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (session) router.replace("/saq");
@@ -80,11 +78,9 @@ export function SignupForm() {
         }),
       });
       const text = await registerRes.text();
-      let registerJson: { error?: string; emailSent?: boolean; verificationUrl?: string };
+      let registerJson: { error?: string };
       try {
-        registerJson = text
-          ? (JSON.parse(text) as { error?: string; emailSent?: boolean; verificationUrl?: string })
-          : {};
+        registerJson = text ? (JSON.parse(text) as { error?: string }) : {};
       } catch {
         setError(
           registerRes.ok
@@ -98,16 +94,7 @@ export function SignupForm() {
         return;
       }
 
-      setRegisteredEmail(email.trim());
-      setVerificationUrl(registerJson.emailSent ? null : registerJson.verificationUrl ?? null);
-      setFullName("");
-      setEmail("");
-      setOrganisationName("");
-      setOrganisationSize("");
-      setIndustry("");
-      setCountry("");
-      setPassword("");
-      setConfirm("");
+      router.push("/login?registered=1");
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -120,7 +107,7 @@ export function SignupForm() {
       <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Create an account</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Sign up with email and password to save and manage your sustainability assessments.
+          Sign up with email and password, or continue with Google or ORCID, to save and manage your assessments.
         </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
@@ -266,7 +253,7 @@ export function SignupForm() {
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
-        <GoogleSignInButton />
+        <SsoButtons />
         <p className="mt-6 text-center text-sm text-slate-600">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-emerald-700 hover:text-emerald-800">
@@ -279,54 +266,6 @@ export function SignupForm() {
           </Link>
         </p>
       </div>
-
-      {registeredEmail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="w-full max-w-md rounded-xl border border-emerald-200 bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-slate-900">Registration successful</h2>
-            <p className="mt-2 text-sm text-slate-700">
-              Your account for <strong>{registeredEmail}</strong> has been created.
-              {verificationUrl
-                ? " Email is not set up on this server yet, so no message was sent. Use the confirmation link below. It confirms the address and opens the login page."
-                : " Check your inbox for a confirmation message. The link in that message confirms the address and opens the login page."}
-            </p>
-            {verificationUrl && (
-              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                <a
-                  href={verificationUrl}
-                  className="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
-                >
-                  Confirm email and go to login
-                </a>
-                <p className="mt-3 break-all text-xs text-slate-600">{verificationUrl}</p>
-              </div>
-            )}
-            <div className="mt-5 flex flex-wrap gap-2">
-              {!verificationUrl && (
-                <Link
-                  href={`/login?registered=1`}
-                  className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-                >
-                  Go to login page
-                </Link>
-              )}
-              <Link
-                href="/saq"
-                className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Go to home page
-              </Link>
-              <button
-                type="button"
-                onClick={() => setRegisteredEmail(null)}
-                className="ml-auto text-sm text-slate-500 hover:text-slate-700"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

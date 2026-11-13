@@ -5,32 +5,40 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { safeNextPath } from "@/src/lib/auth/safe-redirect";
-import { formatAuthErrorMessage } from "@/src/lib/auth/auth-errors";
-import { GoogleSignInButton } from "@/src/components/auth/GoogleSignInButton";
+import { AUTH_ERROR, formatAuthErrorMessage } from "@/src/lib/auth/auth-errors";
+import { SsoButtons } from "@/src/components/auth/SsoButtons";
+import { appFetch } from "@/src/lib/base-path";
 
 interface LoginFormProps {
   nextPath?: string;
   /** Set when redirecting from /auth/callback with a failed auth exchange */
   initialAuthError?: string;
   initialInfo?: string;
+  offerResend?: boolean;
 }
 
-export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginFormProps) {
+export function LoginForm({ nextPath, initialAuthError, initialInfo, offerResend = false }: LoginFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info] = useState<string | null>(initialInfo ?? null);
+  const [info, setInfo] = useState<string | null>(initialInfo ?? null);
   const [loading, setLoading] = useState(false);
+  const [resendVisible, setResendVisible] = useState(offerResend);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (!initialAuthError) return;
-    try {
-      setError(formatAuthErrorMessage(decodeURIComponent(initialAuthError)));
-    } catch {
-      setError(formatAuthErrorMessage(initialAuthError));
-    }
+    const raw = (() => {
+      try {
+        return decodeURIComponent(initialAuthError);
+      } catch {
+        return initialAuthError;
+      }
+    })();
+    setResendVisible(raw === AUTH_ERROR.emailNotConfirmed);
+    setError(formatAuthErrorMessage(raw));
   }, [initialAuthError]);
 
   useEffect(() => {
@@ -48,6 +56,7 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginForm
         redirect: false,
       });
       if (result?.error) {
+        setResendVisible(result.error === AUTH_ERROR.emailNotConfirmed);
         setError(
           formatAuthErrorMessage(result.error ?? "Sign in failed. Please check your credentials.")
         );
@@ -60,12 +69,38 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginForm
     }
   }
 
+  async function resendConfirmation() {
+    setError(null);
+    if (!email.trim()) {
+      setError("Enter your email address first.");
+      return;
+    }
+    setResending(true);
+    try {
+      const res = await appFetch("/api/auth/resend-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(json.error ?? "The confirmation email could not be sent.");
+        return;
+      }
+      setInfo("If that address is waiting for confirmation, we sent another message.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setResending(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-md px-4 py-16 sm:px-6">
       <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Use your email and password to access your assessments.
+          Use your email and password, or continue with Google or ORCID.
         </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
@@ -83,9 +118,14 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginForm
             />
           </div>
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
-              Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <Link href="/forgot-password" className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+                Forgot password?
+              </Link>
+            </div>
             <input
               id="login-password"
               type="password"
@@ -106,6 +146,16 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginForm
               {info}
             </p>
           )}
+          {resendVisible && (
+            <button
+              type="button"
+              onClick={() => void resendConfirmation()}
+              disabled={resending}
+              className="text-sm font-medium text-emerald-700 hover:text-emerald-800 disabled:opacity-50"
+            >
+              {resending ? "Sending…" : "Resend confirmation email"}
+            </button>
+          )}
           <button
             type="submit"
             disabled={loading}
@@ -114,7 +164,7 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo }: LoginForm
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <GoogleSignInButton callbackUrl={nextPath || "/saq"} />
+        <SsoButtons callbackUrl={nextPath || "/saq"} />
         <p className="mt-6 text-center text-sm text-slate-600">
           No account?{" "}
           <Link href="/signup" className="font-medium text-emerald-700 hover:text-emerald-800">

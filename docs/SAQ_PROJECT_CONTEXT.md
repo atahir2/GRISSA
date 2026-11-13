@@ -73,7 +73,9 @@ Derived outputs are always recomputed in memory. Full detail: `docs/SAQ_ARCHITEC
 | `/saq/assessment/[assessmentId]` | Multi-step flow (`AssessmentLayout`); `?versionId=` |
 | `/saq/dashboard/[assessmentId]` | Dashboard |
 | `/saq/report/[assessmentId]` | Web report + PDF export |
-| `/login`, `/signup` | NextAuth credentials |
+| `/login`, `/signup` | NextAuth credentials, Google, and ORCID |
+| `/forgot-password`, `/reset-password` | Email a reset link, then set a new password |
+| `/signup/orcid` | Email address when ORCID does not share one |
 | `/auth/callback` | Legacy Supabase `?code=` exchange when that path is used |
 
 Middleware (`src/middleware.ts`) protects Workspace (`/saq/manage`), assessment, dashboard, and report with NextAuth JWT. Collaboration roles: owner, editor, reviewer, viewer (`permissions.ts`). Version-specific collaborator rows override an all-versions row. Owner-only: new version, delete version, export. Content saves require a draft.
@@ -82,7 +84,7 @@ Middleware (`src/middleware.ts`) protects Workspace (`/saq/manage`), assessment,
 
 ## 5. Current capabilities
 
-- NextAuth sign-up / sign-in / sign-out; optional legacy Supabase callback for old OAuth/email-code flows
+- NextAuth sign-up / sign-in / sign-out, Google and ORCID when configured, emailed confirmation and password reset; optional legacy Supabase callback for old OAuth/email-code flows
 - Owned assessments + collaborators; role-aware edit / manage / delete / export
 - **Assessment versions** (draft / submitted / reviewed / archived); content edits only on **draft**
 - Scope, questionnaire (1–3), live results and action plans via engine
@@ -114,10 +116,10 @@ Local implementation through guided help. Production upload waits for an explici
 
 | Step | Status |
 |------|--------|
-| Profile, access, versions, topic comparison, email confirmation, version-scoped roles, Workspace standards portal | Done locally |
+| Profile, access, versions, topic comparison, email confirmation, password reset, Google and ORCID sign-in, version-scoped roles, Workspace standards portal | Done locally |
 | Guided help | One collapsed Help panel per question. Column N is the level description. Column R is evidence expected. Extra Governance notes stay inside that panel. |
 | Phase 7 Evidence | Done locally. Questions stay collapsed until opened. Every theme has checklist lines (one for level 2, two for level 3). Each level is headed once (“To achieve level 2:”) and the lines under it are numbered. The row shows Current level and Target level. Migration `0005_assessment_evidence` and the `saq_evidence` volume are required. |
 | Phase 8 Action plan | Done locally. Effort (S/M/L) is the size of the work. When to act (Immediate / Urgent / Planned) is the calculated timing and is labeled that way on every screen. Assignee and Next step. |
 | Phase 9 Question hiding | After applicability tags are reviewed. |
 
-SMTP and Google sign-in appear only when the user puts real values in the env files. Postgres and Adminer are published on 127.0.0.1 only. The app port stays reachable by the reverse proxy. Source changes need `npm run docker:up`; a container restart is not enough.
+SMTP, Google, and ORCID sign-in use the values in the env file. Signup and password reset send email only when `SMTP_HOST` is set; the confirmation link is not shown on screen. Postgres and Adminer are published on 127.0.0.1 only. The app port stays reachable by the reverse proxy. Source changes need `npm run docker:up`; a container restart is not enough.

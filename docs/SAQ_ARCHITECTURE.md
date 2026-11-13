@@ -73,7 +73,7 @@ Pure TypeScript: no React, no DB, no auth.
 
 ## Auth and Collaboration
 
-- **Primary auth:** NextAuth credentials — `src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, `src/app/api/auth/register/route.ts`.
+- **Primary auth:** NextAuth credentials, Google, and ORCID — `src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, register, resend-confirmation, forgot-password, and reset-password routes. Confirmation and reset links are emailed when `SMTP_HOST` is set.
 - **Client session:** `AuthSessionProvider` sets `SessionProvider` `basePath={withBasePath("/api/auth")}` so NextAuth works under Next.js `basePath`.
 - **Roles:** `owner` | `editor` | `reviewer` | `viewer` — single source of truth in `permissions.ts`; repository enforces access.
 - **Legacy:** `/auth/callback` may exchange Supabase `?code=` when that path is enabled.
@@ -82,14 +82,14 @@ Pure TypeScript: no React, no DB, no auth.
 
 ```
 src/lib/saq/          domain types, permissions, questionnaire, engine, repositories, facade
-src/lib/auth/         NextAuth options, safe redirects, error formatting
+src/lib/auth/         NextAuth options, mail, ORCID, password reset, safe redirects
 src/lib/db/           Drizzle + pg pool
 src/lib/supabase/     legacy Supabase clients (provider = supabase)
 src/lib/base-path.ts  withBasePath, appFetch, assetUrl
 src/components/saq/   feature UI
-src/components/auth/  login/signup + AuthSessionProvider
+src/components/auth/  login, signup, SSO, password reset, ORCID email
 src/app/saq/          Home, manage, assessment, dashboard, report
-src/app/api/          nextauth, register, saq/repository
+src/app/api/          nextauth, register, confirmation, password reset, saq/repository
 src/middleware.ts     NextAuth JWT gate (+ optional Supabase cookie refresh)
 drizzle/              schema.ts, migrations/
 supabase/migrations/  legacy host SQL

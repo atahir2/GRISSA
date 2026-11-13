@@ -79,7 +79,7 @@ export default async function middleware(request: NextRequest) {
   return res;
 }
 
-/** Workflows that require a session. Home, login, and signup stay public. */
+/** Workflows that require a session. Home, login, signup, password reset, and ORCID email confirmation stay public. */
 export const config = {
   matcher: [
     "/saq/assessment",

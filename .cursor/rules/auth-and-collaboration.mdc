@@ -1,6 +1,6 @@
 ---
 description: Auth, routes, collaboration roles, versions, and permission helpers
-globs: "{src/lib/auth/**/*.ts,src/lib/saq/permissions.ts,src/middleware.ts,src/app/api/auth/**/*.ts,src/app/auth/**/*.tsx,src/app/login/**/*.tsx,src/app/signup/**/*.tsx,src/lib/supabase/middleware.ts,src/components/auth/**/*.tsx,src/components/saq/SaqAuthenticatedHeader.tsx,src/components/saq/AssessmentCollaboratorsPanel.tsx,src/components/saq/AssessmentVersionsPanel.tsx,src/components/saq/useAssessmentVersionRoute.ts}"
+globs: "{src/lib/auth/**/*.ts,src/lib/saq/permissions.ts,src/middleware.ts,src/app/api/auth/**/*.ts,src/app/auth/**/*.tsx,src/app/login/**/*.tsx,src/app/signup/**/*.tsx,src/app/forgot-password/**/*.tsx,src/app/reset-password/**/*.tsx,src/lib/supabase/middleware.ts,src/components/auth/**/*.tsx,src/components/saq/SaqAuthenticatedHeader.tsx,src/components/saq/AssessmentCollaboratorsPanel.tsx,src/components/saq/AssessmentVersionsPanel.tsx,src/components/saq/useAssessmentVersionRoute.ts}"
 alwaysApply: false
 ---
 
@@ -8,10 +8,12 @@ alwaysApply: false
 
 ## Authentication
 
-- **Primary app auth:** **NextAuth** (credentials) with PostgreSQL-backed users via Drizzle adapter (`src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, register route). Session strategy is **JWT**.
+- **Primary app auth:** **NextAuth** (credentials, plus Google and ORCID when each provider's client id and secret are set) with PostgreSQL-backed users via Drizzle adapter (`src/lib/auth/auth.ts`, `src/app/api/auth/[...nextauth]/route.ts`, register, confirmation, and password-reset routes). Session strategy is **JWT**.
+- A wrong password shows “Incorrect email or password.” An unverified password account must open the confirmation email first. Accounts that only use Google or ORCID are told to use that service or Forgot password.
+- Confirmation and password-reset messages are sent by SMTP (`SMTP_HOST`, optional `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`). The signup screen does not show the link. ORCID without an email continues at `/signup/orcid`, which emails a link that connects the ORCID iD. `/forgot-password` and `/reset-password` stay public.
 - **`AuthSessionProvider`:** wraps **`SessionProvider`** with **`basePath={withBasePath("/api/auth")}`** so client auth works under Next.js `basePath`.
 - **Middleware:** only **`src/middleware.ts`** (do not add a root `middleware.ts` — Next prioritizes root over `src/` and would shadow this file). Gate assessment / dashboard / report with **`next-auth/jwt`** `getToken`. If `NEXT_PUBLIC_SUPABASE_*` are set, optionally refresh Supabase cookies; that does **not** replace the NextAuth gate.
-- **Public:** `/saq` intro, `/login`, and `/signup` are not behind the middleware matcher. `/saq/manage` requires a session, same as assessment, dashboard, and report. Protected workflows redirect to Login with `next=…` when there is no JWT.
+- **Public:** `/saq` intro, `/login`, `/signup`, `/forgot-password`, `/reset-password`, and `/signup/orcid` are not behind the middleware matcher. `/saq/manage` requires a session, same as assessment, dashboard, and report. Protected workflows redirect to Login with `next=…` when there is no JWT.
 - **Legacy:** `/auth/callback` may exchange Supabase `?code=` when that path is enabled; credentials flows use NextAuth forms.
 
 ## Versions and collaboration data

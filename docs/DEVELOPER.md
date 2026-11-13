@@ -152,7 +152,9 @@ Full guide: **[DOCKER.md](DOCKER.md)**.
 
 | Route | Role |
 |-------|------|
-| `/signup`, `/login` | Account registration and sign-in |
+| `/signup`, `/login` | Account registration and sign-in (email, Google, ORCID) |
+| `/forgot-password`, `/reset-password` | Email a reset link, then set a new password |
+| `/signup/orcid` | Email address when ORCID does not share one |
 | `/saq` | Public Home (introduction) |
 | `/saq/manage` | Workspace — list/create assessments |
 | `/saq/manage/[assessmentId]` | Team access and assessment versions |
