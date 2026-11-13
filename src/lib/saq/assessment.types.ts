@@ -13,6 +13,8 @@ import type { AssessmentRole, AssessmentVersionStatus } from "@/src/lib/saq/perm
 export interface Assessment {
   id: string;
   organisationName: string;
+  industry?: string | null;
+  operatingModel?: string | null;
   /** ISO date string or Date for transport; use Date in app when needed. */
   createdAt: Date | string;
   updatedAt?: Date | string;
@@ -45,7 +47,10 @@ export interface AssessmentCollaborator {
   id: string;
   userId: string;
   email: string;
+  /** Signup or account name, when the database has one. */
+  name?: string | null;
   role: AssessmentRole;
+  versionId: string | null;
   invitedBy: string | null;
   createdAt: Date;
 }
@@ -61,6 +66,26 @@ export interface AssessmentAnswer {
   assessmentId: string;
   questionId: string;
   selectedScore?: CapabilityScore;
+}
+
+/** Checklist ticks and notes for one question. Files are stored separately. */
+export interface QuestionEvidence {
+  questionId: string;
+  notes: string;
+  presentKeys: string[];
+}
+
+export interface EvidenceFileRecord {
+  id: string;
+  questionId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export interface EvidenceState {
+  questions: QuestionEvidence[];
+  files: EvidenceFileRecord[];
 }
 
 export type ImprovementPriority = "High" | "Medium" | "Low";

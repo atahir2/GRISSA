@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AssessmentStepper } from "./AssessmentStepper";
 import { ScopeGoalsStep } from "./ScopeGoalsStep";
 import { QuestionnaireStep } from "./QuestionnaireStep";
+import { EvidenceStep } from "./EvidenceStep";
 import { ResultsStep } from "./ResultsStep";
 import { ActionPlanStep } from "./ActionPlanStep";
 import { getQuestionnaireConfig } from "@/src/lib/saq/questionnaire.repository";
@@ -12,25 +13,33 @@ import type {
   ScopeSelection,
   AssessmentAnswer,
 } from "@/src/lib/saq/engine/results";
+import type { AssessmentCollaborator, EvidenceFileRecord, QuestionEvidence } from "@/src/lib/saq/assessment.types";
 import { buildAssessmentResults } from "@/src/lib/saq/engine/results";
 import { buildActionPlan, type ExistingActionMetadata } from "@/src/lib/saq/engine/actions";
 import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
 import {
   getAssessmentAccess,
+  listAssessmentCollaborators,
   loadScopeSelections,
   loadAnswers,
   loadActionMetadata,
+  loadEvidence,
   saveScopeSelections,
   saveAnswers,
   saveActionMetadata,
+  saveEvidence,
   type ActionMetadata,
 } from "@/src/lib/saq/assessment.repository";
 import { canEditAssessment, canEditAssessmentVersionContent } from "@/src/lib/saq/permissions";
-import { AssessmentCollaboratorsPanel } from "./AssessmentCollaboratorsPanel";
-import { AssessmentVersionsPanel } from "./AssessmentVersionsPanel";
 import { useAssessmentVersionRoute } from "./useAssessmentVersionRoute";
+import { GrissaPageHeader } from "./GrissaPageHeader";
 
-const STEPS = ["Scope & Goals", "Questionnaire", "Results", "Action Plan"] as const;
+const STEPS = ["Scope & Goals", "Questionnaire", "Evidence", "Results", "Action Plan"] as const;
+const STEP_SCOPE = 0;
+const STEP_QUESTIONNAIRE = 1;
+const STEP_EVIDENCE = 2;
+const STEP_RESULTS = 3;
+const STEP_ACTION = 4;
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -46,8 +55,6 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
     versionError,
     effectiveVersionId,
     currentVersion,
-    reloadVersions,
-    navigateToVersion,
   } = useAssessmentVersionRoute(assessmentId);
 
   const [dataLoading, setDataLoading] = useState(!!assessmentId);
@@ -72,6 +79,9 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   const [actionMetadataByQuestionId, setActionMetadataByQuestionId] = useState<
     Record<string, ExistingActionMetadata>
   >({});
+  const [questionEvidence, setQuestionEvidence] = useState<QuestionEvidence[]>([]);
+  const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFileRecord[]>([]);
+  const [assigneeOptions, setAssigneeOptions] = useState<string[]>([]);
 
   useEffect(() => {
     setCurrentStep(0);
@@ -98,10 +108,12 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
           return;
         }
         setMyRole(access.myRole);
-        const [scope, ans, meta] = await Promise.all([
+        const [scope, ans, meta, evidenceState, collaborators] = await Promise.all([
           loadScopeSelections(assessmentId, effectiveVersionId),
           loadAnswers(assessmentId, effectiveVersionId),
           loadActionMetadata(assessmentId, effectiveVersionId),
+          loadEvidence(assessmentId, effectiveVersionId),
+          listAssessmentCollaborators(assessmentId).catch(() => [] as AssessmentCollaborator[]),
         ]);
         if (cancelled) return;
         setAssessmentName(access.assessment.organisationName);
@@ -127,6 +139,13 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
         }
         setEffortByQuestionId(effort);
         setActionMetadataByQuestionId(metadata);
+        setQuestionEvidence(evidenceState.questions);
+        setEvidenceFiles(evidenceState.files);
+        const names = collaborators
+          .filter((person) => !person.versionId || person.versionId === effectiveVersionId)
+          .map((person) => (person.name?.trim() || person.email).trim())
+          .filter(Boolean);
+        setAssigneeOptions([...new Set(names)].sort((a, b) => a.localeCompare(b)));
       } catch (e) {
         if (!cancelled) {
           setLoadError(e instanceof Error ? e.message : "Failed to load assessment.");
@@ -174,6 +193,27 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
     }
   }, [assessmentId, effectiveVersionId, answers, canEditThisVersion]);
 
+  const persistEvidence = useCallback(async () => {
+    if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
+    setSaveStatus("saving");
+    try {
+      const inScopeIds = new Set(
+        questions
+          .filter((question) => scopeSelections.some((item) => item.inScope && item.scopeId === question.scopeId))
+          .map((question) => question.id),
+      );
+      await saveEvidence(
+        assessmentId,
+        effectiveVersionId,
+        questionEvidence.filter((item) => inScopeIds.has(item.questionId)),
+      );
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("error");
+    }
+  }, [assessmentId, effectiveVersionId, canEditThisVersion, questions, scopeSelections, questionEvidence]);
+
   const persistActionMetadata = useCallback(async () => {
     if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
     setSaveStatus("saving");
@@ -192,6 +232,18 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
       setSaveStatus("error");
     }
   }, [assessmentId, effectiveVersionId, effortByQuestionId, actionMetadataByQuestionId, canEditThisVersion]);
+
+  const saveAllProgress = useCallback(async () => {
+    if (!assessmentId || !effectiveVersionId || !canEditThisVersion) return;
+    setSaveStatus("saving");
+    try {
+      await Promise.all([persistScope(), persistAnswers(), persistEvidence(), persistActionMetadata()]);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("error");
+    }
+  }, [assessmentId, effectiveVersionId, canEditThisVersion, persistScope, persistAnswers, persistEvidence, persistActionMetadata]);
 
   const assessmentResults = useMemo(
     () => buildAssessmentResults(scopeSelections, answers),
@@ -214,24 +266,24 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   const canProceedToActionPlan = totalQuestions > 0;
 
   const canGoNext =
-    currentStep === STEPS.length - 1
+    currentStep === STEP_ACTION
       ? true
-      : currentStep === 0
+      : currentStep === STEP_SCOPE
       ? canProceedToResults
-      : currentStep === 1
-      ? totalQuestions === 0 || answeredQuestions > 0
-      : currentStep === 2
+      : currentStep === STEP_QUESTIONNAIRE
+      ? totalQuestions > 0 && answeredQuestions === totalQuestions
+      : currentStep === STEP_RESULTS
       ? canProceedToActionPlan
       : true;
 
   const canGoBack = currentStep > 0;
 
   const blockReason =
-    currentStep === 0 && !canProceedToResults
+    currentStep === STEP_SCOPE && !canProceedToResults
       ? "Select at least one scope item as in scope to continue."
-      : currentStep === 1 && totalQuestions > 0 && answeredQuestions === 0
-      ? "Answer at least one question to continue."
-      : currentStep === 2 && !canProceedToActionPlan
+      : currentStep === STEP_QUESTIONNAIRE && totalQuestions > 0 && answeredQuestions < totalQuestions
+      ? "Answer every in-scope question to continue. Questions marked with * are required."
+      : currentStep === STEP_RESULTS && !canProceedToActionPlan
       ? "Complete the questionnaire to view the action plan."
       : null;
 
@@ -248,32 +300,37 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
       return;
     }
     if (assessmentId) {
-      if (currentStep === 0) persistScope().then(() => setCurrentStep(next));
-      else if (currentStep === 1) persistAnswers().then(() => setCurrentStep(next));
+      if (currentStep === STEP_SCOPE) persistScope().then(() => setCurrentStep(next));
+      else if (currentStep === STEP_QUESTIONNAIRE) persistAnswers().then(() => setCurrentStep(next));
+      else if (currentStep === STEP_EVIDENCE) persistEvidence().then(() => setCurrentStep(next));
       else setCurrentStep(next);
     } else {
       setCurrentStep(next);
     }
-  }, [assessmentId, effectiveVersionId, currentStep, persistScope, persistAnswers, persistActionMetadata, router]);
+  }, [assessmentId, effectiveVersionId, currentStep, persistScope, persistAnswers, persistEvidence, persistActionMetadata, router]);
 
   const goBack = useCallback(() => {
     const prev = Math.max(0, currentStep - 1);
-    if (assessmentId && currentStep === 1) {
+    if (assessmentId && currentStep === STEP_QUESTIONNAIRE) {
       persistScope().then(() => setCurrentStep(prev));
-    } else if (assessmentId && currentStep === 2) {
+    } else if (assessmentId && currentStep === STEP_EVIDENCE) {
+      persistEvidence().then(() => setCurrentStep(prev));
+    } else if (assessmentId && currentStep === STEP_RESULTS) {
       persistAnswers().then(() => setCurrentStep(prev));
     } else {
       setCurrentStep(prev);
     }
-  }, [assessmentId, currentStep, persistScope, persistAnswers]);
+  }, [assessmentId, currentStep, persistScope, persistAnswers, persistEvidence]);
 
   const combinedError = versionError || loadError;
+  const showSaveButton = !!assessmentId && canEditThisVersion;
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-5xl px-4 py-16 text-center">
-          <p className="text-slate-600">Loading assessment…</p>
+      <main className="min-h-0 flex-1 bg-transparent">
+      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
+          <p className="text-slate-400">Loading assessment…</p>
+          <div className="mx-auto mt-4 h-1 w-32 animate-pulse rounded bg-slate-600" />
         </div>
       </main>
     );
@@ -281,8 +338,8 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
 
   if (combinedError && assessmentId) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-5xl px-4 py-16">
+      <main className="min-h-0 flex-1 bg-transparent">
+        <div className="mx-auto max-w-7xl px-4 py-16">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
             {combinedError.includes("Access denied") ? (
               <>
@@ -295,10 +352,10 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
           </div>
           <button
             type="button"
-            onClick={() => router.push("/saq")}
+            onClick={() => router.push("/saq/manage")}
             className="mt-4 text-sm font-medium text-emerald-600 hover:underline"
           >
-            Back to SAQ
+            Back to assessments
           </button>
         </div>
       </main>
@@ -306,20 +363,17 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-            Sustainability Self-Assessment
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 sm:text-base">
-            Prepare a certification baseline for your Research Infrastructure by defining scope, answering the questionnaire, and reviewing results and recommended actions.
-          </p>
+    <main className="min-h-0 flex-1 bg-transparent pb-12">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <GrissaPageHeader
+          title="GRISSA Assessment"
+          description="Prepare a sustainability baseline by defining scope, answering the questionnaire, recording evidence, and reviewing results and recommended actions."
+        >
           {assessmentName && (
-            <p className="mt-2 text-sm font-medium text-slate-700">
+            <p className="mt-2 text-sm font-medium text-slate-300">
               Assessment: {assessmentName}
               {myRole && (
-                <span className="ml-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-800">
+                <span className="ml-2 inline-flex rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-100">
                   {myRole === "owner"
                     ? "Owner"
                     : myRole === "editor"
@@ -346,27 +400,13 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
             </p>
           )}
           {assessmentId && canEditThisVersion && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+            <div className="mt-2 flex items-center gap-2 text-sm text-slate-400">
               {saveStatus === "saving" && <span>Saving…</span>}
               {saveStatus === "saved" && <span className="text-emerald-600">Saved</span>}
               {saveStatus === "error" && <span className="text-red-600">Save failed</span>}
             </div>
           )}
-        </header>
-
-        {assessmentId && myRole && effectiveVersionId && (
-          <div className="mb-6">
-            <AssessmentVersionsPanel
-              assessmentId={assessmentId}
-              myRole={myRole}
-              versions={versions}
-              currentVersion={currentVersion}
-              currentVersionId={effectiveVersionId}
-              onVersionsChanged={reloadVersions}
-              onSelectVersion={navigateToVersion}
-            />
-          </div>
-        )}
+        </GrissaPageHeader>
 
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
@@ -394,13 +434,46 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
           </div>
         </div>
 
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              disabled={!canGoBack}
+              onClick={goBack}
+              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Back
+            </button>
+            <div className="flex items-center gap-2">
+              {showSaveButton && (
+                <button
+                  type="button"
+                  onClick={() => void saveAllProgress()}
+                  disabled={saveStatus === "saving"}
+                  className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+                >
+                  {saveStatus === "saving" ? "Saving..." : "Save progress"}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={!canGoNext}
+                onClick={goNext}
+                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {currentStep === STEPS.length - 1 ? "Finish" : "Next"}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-4 py-3 sm:px-6">
             <AssessmentStepper currentStep={currentStep} steps={STEPS} />
           </div>
 
           <div className="px-4 py-6 sm:px-6 sm:py-8">
-            {currentStep === 0 && (
+            {currentStep === STEP_SCOPE && (
               <ScopeGoalsStep
                 themes={themes}
                 scopeItems={scopeItems}
@@ -409,7 +482,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
                 readOnly={readOnly}
               />
             )}
-            {currentStep === 1 && (
+            {currentStep === STEP_QUESTIONNAIRE && (
               <QuestionnaireStep
                 themes={themes}
                 scopeItems={scopeItems}
@@ -417,22 +490,47 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
                 scopeSelections={scopeSelections}
                 answers={answers}
                 onChange={setAnswers}
+                assessmentResults={assessmentResults}
                 readOnly={readOnly}
               />
             )}
-            {currentStep === 2 && (
+            {currentStep === STEP_EVIDENCE && (
+              <EvidenceStep
+                assessmentId={assessmentId}
+                versionId={effectiveVersionId ?? undefined}
+                themes={themes}
+                questions={questions}
+                scopeSelections={scopeSelections}
+                answers={answers}
+                evidence={questionEvidence}
+                files={evidenceFiles}
+                onEvidenceChange={setQuestionEvidence}
+                onFilesChange={setEvidenceFiles}
+                readOnly={readOnly}
+              />
+            )}
+            {currentStep === STEP_RESULTS && (
               <ResultsStep assessmentResults={assessmentResults} />
             )}
-            {currentStep === 3 && (
+            {currentStep === STEP_ACTION && (
               <ActionPlanStep
                 actionPlan={actionPlan}
+                assigneeOptions={assigneeOptions}
                 readOnly={readOnly}
-                onEffortChange={(questionId, effort) =>
-                  setEffortByQuestionId((prev) => ({
-                    ...prev,
-                    [questionId]: effort,
-                  }))
-                }
+                onEffortChange={(questionId, effort) => {
+                  setEffortByQuestionId((prev) => {
+                    const next = { ...prev };
+                    if (effort) next[questionId] = effort;
+                    else delete next[questionId];
+                    return next;
+                  });
+                  if (!effort) {
+                    setActionMetadataByQuestionId((prev) => ({
+                      ...prev,
+                      [questionId]: prev[questionId] ?? {},
+                    }));
+                  }
+                }}
                 onActionMetadataChange={(questionId, patch) =>
                   setActionMetadataByQuestionId((prev) => ({
                     ...prev,
@@ -448,7 +546,7 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
               </p>
             )}
 
-            <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
               <button
                 type="button"
                 disabled={!canGoBack}
@@ -457,23 +555,38 @@ export function AssessmentLayout({ assessmentId }: AssessmentLayoutProps) {
               >
                 Back
               </button>
-              <span className="text-sm text-slate-500">
-                Step {currentStep + 1} of {STEPS.length}
-              </span>
-              <button
-                type="button"
-                disabled={!canGoNext}
-                onClick={goNext}
-                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {currentStep === STEPS.length - 1 ? "Finish" : "Next"}
-              </button>
+              <div className="flex items-center gap-2">
+                {showSaveButton && (
+                  <button
+                    type="button"
+                    onClick={() => void saveAllProgress()}
+                    disabled={saveStatus === "saving"}
+                    className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+                  >
+                    {saveStatus === "saving" ? "Saving..." : "Save progress"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={!canGoNext}
+                  onClick={goNext}
+                  className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {currentStep === STEPS.length - 1 ? "Finish" : "Next"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {assessmentId && myRole && (
-          <AssessmentCollaboratorsPanel assessmentId={assessmentId} myRole={myRole} />
+        {assessmentId && myRole && versions.length > 1 && (
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+            You are currenlty viewing version{" "}
+            <span className="font-medium text-slate-900">
+              {currentVersion ? `v${currentVersion.versionNumber}` : "unknown"}
+            </span>
+            . Manage versions and team access from Workspace.
+          </div>
         )}
       </div>
     </main>

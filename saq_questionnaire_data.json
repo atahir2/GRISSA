@@ -1,0 +1,1465 @@
+{
+  "summary": {
+    "sheet_names": [
+      "0. Introduction",
+      "1. Scope & Goals",
+      "2-3. Assessment & Actions",
+      "4. Priority&Capability Results",
+      "5-6. Action Plan & Monitoring"
+    ],
+    "theme_count": 7,
+    "question_count": 33,
+    "assessment_rows_with_scores": 99,
+    "scope_item_count": 32
+  },
+  "categories": [
+    {
+      "name": "Governance and Compliance",
+      "question_count": 6
+    },
+    {
+      "name": "Stakeholder Engagement and Awareness",
+      "question_count": 3
+    },
+    {
+      "name": "Energy Efficiency and Decarbonisation",
+      "question_count": 6
+    },
+    {
+      "name": "Environmental Monitoring and Impact",
+      "question_count": 5
+    },
+    {
+      "name": "Pollution, Waste, and Circularity",
+      "question_count": 5
+    },
+    {
+      "name": "Water and Ecosystems",
+      "question_count": 4
+    },
+    {
+      "name": "Lifecycle Integration",
+      "question_count": 4
+    }
+  ],
+  "questions": [
+    {
+      "category": "Governance and Compliance",
+      "scope_label": "G1: Alignment with relevant EU regulations (CSRD, ESRS, EED, ESPR, WEEE, LCA, ISO14040, ISO14044)",
+      "scope_row": 9,
+      "question_code": "G1.1",
+      "question_row": 6,
+      "assessment_input_cell": "P6",
+      "type": "Output / Achievement",
+      "question": "To what extent is the RI aligned with relevant EU environmental regulations such as CSRD, ESRS, EED, ESPR, WEEE, LCA, ISO14040, ISO14044?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "CSRD, ESRS E1-E5,  ESPR, EED, WEEE, LCA, ISO14040, ISO14044",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 6,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O6",
+          "description_cell": "N6"
+        },
+        {
+          "score": 2,
+          "assessment_row": 7,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O7",
+          "description_cell": "N7"
+        },
+        {
+          "score": 3,
+          "assessment_row": 8,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O8",
+          "description_cell": "N8"
+        }
+      ],
+      "results_row_in_sheet4": 6,
+      "action_row_in_sheet5": 5
+    },
+    {
+      "category": "Governance and Compliance",
+      "scope_label": "G1: Alignment with relevant EU regulations (CSRD, ESRS, EED, ESPR, WEEE, LCA, ISO14040, ISO14044)",
+      "scope_row": 9,
+      "question_code": "G1.2",
+      "question_row": 9,
+      "assessment_input_cell": "P9",
+      "type": "Task /\nactivity",
+      "question": "Has the RI conducted a review or gap analysis to identify which regulations apply and how they are addressed?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "CSRD, ESRS E1-E5, ESPR, WEEE",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 9,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O9",
+          "description_cell": "N9"
+        },
+        {
+          "score": 2,
+          "assessment_row": 10,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O10",
+          "description_cell": "N10"
+        },
+        {
+          "score": 3,
+          "assessment_row": 11,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O11",
+          "description_cell": "N11"
+        }
+      ],
+      "results_row_in_sheet4": 7,
+      "action_row_in_sheet5": 6
+    },
+    {
+      "category": "Governance and Compliance",
+      "scope_label": "G2: Existence of a formal environmental sustainability strategy",
+      "scope_row": 10,
+      "question_code": "G2.1",
+      "question_row": 12,
+      "assessment_input_cell": "P12",
+      "type": "Output / Achievement",
+      "question": "Is there a documented environmental sustainability strategy in place, endorsed by leadership and periodically updated?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ESRS E1, ISO 14001",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 12,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O12",
+          "description_cell": "N12"
+        },
+        {
+          "score": 2,
+          "assessment_row": 13,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O13",
+          "description_cell": "N13"
+        },
+        {
+          "score": 3,
+          "assessment_row": 14,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O14",
+          "description_cell": "N14"
+        }
+      ],
+      "results_row_in_sheet4": 8,
+      "action_row_in_sheet5": 7
+    },
+    {
+      "category": "Governance and Compliance",
+      "scope_label": "G3: Defined roles and responsibilities for sustainability",
+      "scope_row": 11,
+      "question_code": "G3.1",
+      "question_row": 15,
+      "assessment_input_cell": "P15",
+      "type": "Task /\nactivity",
+      "question": "Are roles and responsibilities for environmental sustainability clearly assigned across relevant functions within the RI?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14001, CSRD",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 15,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O15",
+          "description_cell": "N15"
+        },
+        {
+          "score": 2,
+          "assessment_row": 16,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O16",
+          "description_cell": "N16"
+        },
+        {
+          "score": 3,
+          "assessment_row": 17,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O17",
+          "description_cell": "N17"
+        }
+      ],
+      "results_row_in_sheet4": 9,
+      "action_row_in_sheet5": 8
+    },
+    {
+      "category": "Governance and Compliance",
+      "scope_label": "G4: Inclusion of sustainability in internal policies or quality systems",
+      "scope_row": 12,
+      "question_code": "G4.1",
+      "question_row": 18,
+      "assessment_input_cell": "P18",
+      "type": "Task /\nactivity",
+      "question": "To what extent is environmental sustainability integrated into the RI’s internal policies, management systems, or quality frameworks?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14001, CSRD, EMAS",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 18,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O18",
+          "description_cell": "N18"
+        },
+        {
+          "score": 2,
+          "assessment_row": 19,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O19",
+          "description_cell": "N19"
+        },
+        {
+          "score": 3,
+          "assessment_row": 20,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O20",
+          "description_cell": "N20"
+        }
+      ],
+      "results_row_in_sheet4": 10,
+      "action_row_in_sheet5": 9
+    },
+    {
+      "category": "Governance and Compliance",
+      "scope_label": "G5: Inclusion of sustainability in procurement or supplier management",
+      "scope_row": 13,
+      "question_code": "G5.1",
+      "question_row": 21,
+      "assessment_input_cell": "P21",
+      "type": "Task /\nactivity",
+      "question": "Does the RI include environmental sustainability criteria in procurement processes and supplier evaluations?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "% of suppliers evaluated with environmental criteria (optional)",
+      "reference": "ISO 20400, ESRS G1, ESRS E5, EU Green Public Procurement Guidelines",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 21,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O21",
+          "description_cell": "N21"
+        },
+        {
+          "score": 2,
+          "assessment_row": 22,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O22",
+          "description_cell": "N22"
+        },
+        {
+          "score": 3,
+          "assessment_row": 23,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O23",
+          "description_cell": "N23"
+        }
+      ],
+      "results_row_in_sheet4": 11,
+      "action_row_in_sheet5": 10
+    },
+    {
+      "category": "Stakeholder Engagement and Awareness",
+      "scope_label": "S1: Sustainability awareness/training for staff",
+      "scope_row": 15,
+      "question_code": "S1.1",
+      "question_row": 25,
+      "assessment_input_cell": "P25",
+      "type": "Task /\nactivity",
+      "question": "To what extent does the RI provide staff training or awareness programmes on environmental sustainability topics relevant to their roles?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "% of staff trained annually, number of training sessions",
+      "reference": "ISO 14001, ESRS",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 25,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O25",
+          "description_cell": "N25"
+        },
+        {
+          "score": 2,
+          "assessment_row": 26,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O26",
+          "description_cell": "N26"
+        },
+        {
+          "score": 3,
+          "assessment_row": 27,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O27",
+          "description_cell": "N27"
+        }
+      ],
+      "results_row_in_sheet4": 12,
+      "action_row_in_sheet5": 11
+    },
+    {
+      "category": "Stakeholder Engagement and Awareness",
+      "scope_label": "S2: Involvement of stakeholders in environmental planning",
+      "scope_row": 16,
+      "question_code": "S2.1",
+      "question_row": 28,
+      "assessment_input_cell": "P28",
+      "type": "Task /\nactivity",
+      "question": "Are relevant stakeholders (e.g. users, suppliers, partners) engaged in environmental planning or sustainability goal-setting processes?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14001, ESRS 1",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 28,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O28",
+          "description_cell": "N28"
+        },
+        {
+          "score": 2,
+          "assessment_row": 29,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O29",
+          "description_cell": "N29"
+        },
+        {
+          "score": 3,
+          "assessment_row": 30,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O30",
+          "description_cell": "N30"
+        }
+      ],
+      "results_row_in_sheet4": 13,
+      "action_row_in_sheet5": 12
+    },
+    {
+      "category": "Stakeholder Engagement and Awareness",
+      "scope_label": "S3: Transparent communication of environmental performance",
+      "scope_row": 17,
+      "question_code": "S3.1",
+      "question_row": 31,
+      "assessment_input_cell": "P31",
+      "type": "Output / Achievement",
+      "question": "Does the RI regularly communicate its environmental performance, actions, or goals to internal and external stakeholders?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "Frequency and scope of communications (e.g., reports/year)",
+      "reference": "CSRD, ESRS E1, ISO 14063",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 31,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O31",
+          "description_cell": "N31"
+        },
+        {
+          "score": 2,
+          "assessment_row": 32,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O32",
+          "description_cell": "N32"
+        },
+        {
+          "score": 3,
+          "assessment_row": 33,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O33",
+          "description_cell": "N33"
+        }
+      ],
+      "results_row_in_sheet4": 14,
+      "action_row_in_sheet5": 13
+    },
+    {
+      "category": "Energy Efficiency and Decarbonisation",
+      "scope_label": "E1: Adoption of renewable energy sources",
+      "scope_row": 19,
+      "question_code": "E1.1",
+      "question_row": 35,
+      "assessment_input_cell": "P35",
+      "type": "Output / Achievement",
+      "question": "What proportion of the RI’s energy consumption is sourced from renewable energy, and how is this verified?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Energy",
+      "associated_metric": "% of energy from renewable sources",
+      "reference": "ISO 50001, ESRS E1, EU Renewable Energy Directive",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 35,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O35",
+          "description_cell": "N35"
+        },
+        {
+          "score": 2,
+          "assessment_row": 36,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O36",
+          "description_cell": "N36"
+        },
+        {
+          "score": 3,
+          "assessment_row": 37,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O37",
+          "description_cell": "N37"
+        }
+      ],
+      "results_row_in_sheet4": 15,
+      "action_row_in_sheet5": 14
+    },
+    {
+      "category": "Energy Efficiency and Decarbonisation",
+      "scope_label": "E2: AI-driven workload or energy optimisation",
+      "scope_row": 20,
+      "question_code": "E2.1",
+      "question_row": 38,
+      "assessment_input_cell": "P38",
+      "type": "Task /\nactivity",
+      "question": "Are AI or automation systems used to optimise energy consumption across compute, cooling, or other infrastructure components?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Energy",
+      "associated_metric": "Estimated energy savings (%) from AI/automation",
+      "reference": "ISO 50001, EN 50600-4-8 (Energy Reuse)",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 38,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O38",
+          "description_cell": "N38"
+        },
+        {
+          "score": 2,
+          "assessment_row": 39,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O39",
+          "description_cell": "N39"
+        },
+        {
+          "score": 3,
+          "assessment_row": 40,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O40",
+          "description_cell": "N40"
+        }
+      ],
+      "results_row_in_sheet4": 16,
+      "action_row_in_sheet5": 15
+    },
+    {
+      "category": "Energy Efficiency and Decarbonisation",
+      "scope_label": "E3: Waste heat recovery or reuse strategies",
+      "scope_row": 21,
+      "question_code": "E3.1",
+      "question_row": 41,
+      "assessment_input_cell": "P41",
+      "type": "Task /\nactivity",
+      "question": "Does the RI implement strategies to recover or reuse waste heat generated by infrastructure?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Energy",
+      "associated_metric": "Energy reuse factor (ERF), % of recovered heat reused",
+      "reference": "EN 50600-4-6, ISO 50001",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 41,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O41",
+          "description_cell": "N41"
+        },
+        {
+          "score": 2,
+          "assessment_row": 42,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O42",
+          "description_cell": "N42"
+        },
+        {
+          "score": 3,
+          "assessment_row": 43,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O43",
+          "description_cell": "N43"
+        }
+      ],
+      "results_row_in_sheet4": 17,
+      "action_row_in_sheet5": 16
+    },
+    {
+      "category": "Energy Efficiency and Decarbonisation",
+      "scope_label": "E4: Power Usage Effectiveness (PUE) tracking and optimisation",
+      "scope_row": 22,
+      "question_code": "E4.1",
+      "question_row": 44,
+      "assessment_input_cell": "P44",
+      "type": "Output / Achievement",
+      "question": "Is the RI’s PUE monitored regularly, and are efforts in place to optimise it over time?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Energy",
+      "associated_metric": "Power Usage Effectiveness (PUE)",
+      "reference": "ISO/IEC 30134-2, EN 50600-4-2, EU CoC on Data Centre Energy Efficiency",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 44,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O44",
+          "description_cell": "N44"
+        },
+        {
+          "score": 2,
+          "assessment_row": 45,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O45",
+          "description_cell": "N45"
+        },
+        {
+          "score": 3,
+          "assessment_row": 46,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O46",
+          "description_cell": "N46"
+        }
+      ],
+      "results_row_in_sheet4": 18,
+      "action_row_in_sheet5": 17
+    },
+    {
+      "category": "Energy Efficiency and Decarbonisation",
+      "scope_label": "E5: Carbon Use Effectiveness (CUE) tracking and reduction",
+      "scope_row": 23,
+      "question_code": "E5.1",
+      "question_row": 47,
+      "assessment_input_cell": "P47",
+      "type": "Output / Achievement",
+      "question": "Is CUE calculated and used as a metric for assessing carbon performance of the RI’s operations?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Climate Change",
+      "associated_metric": "Carbon Usage Effectiveness (CUE)",
+      "reference": "ISO/IEC 30134-3, GHG Protocol Scope 2 Guidance",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 47,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O47",
+          "description_cell": "N47"
+        },
+        {
+          "score": 2,
+          "assessment_row": 48,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O48",
+          "description_cell": "N48"
+        },
+        {
+          "score": 3,
+          "assessment_row": 49,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O49",
+          "description_cell": "N49"
+        }
+      ],
+      "results_row_in_sheet4": 19,
+      "action_row_in_sheet5": 18
+    },
+    {
+      "category": "Energy Efficiency and Decarbonisation",
+      "scope_label": "E6: Flexible energy usage or smart grid responsiveness",
+      "scope_row": 24,
+      "question_code": "E6.1",
+      "question_row": 50,
+      "assessment_input_cell": "P50",
+      "type": "Task /\nactivity",
+      "question": "Does the RI participate in energy flexibility initiatives, such as demand response or smart grid integration?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Energy",
+      "associated_metric": "Participation in flexibility programs; % load modulated during events",
+      "reference": "EU Electricity Directive, EN 50600-4-7 (Availability and resilience), Smart Grid Task Force reports",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 50,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O50",
+          "description_cell": "N50"
+        },
+        {
+          "score": 2,
+          "assessment_row": 51,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O51",
+          "description_cell": "N51"
+        },
+        {
+          "score": 3,
+          "assessment_row": 52,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O52",
+          "description_cell": "N52"
+        }
+      ],
+      "results_row_in_sheet4": 20,
+      "action_row_in_sheet5": 19
+    },
+    {
+      "category": "Environmental Monitoring and Impact",
+      "scope_label": "M1: Measurement of environmental KPIs (GHG, energy, water, waste)",
+      "scope_row": 26,
+      "question_code": "M1.1",
+      "question_row": 54,
+      "assessment_input_cell": "P54",
+      "type": "Output / Achievement",
+      "question": "Which environmental KPIs (e.g. GHG emissions, energy, water, waste) are currently measured and how frequently are they reported?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Climate Change",
+      "associated_metric": "Number and frequency of reported environmental KPIs",
+      "reference": "ISO 14031, ESRS E1–E5, GHG Protocol, ISO 14064",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 54,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O54",
+          "description_cell": "N54"
+        },
+        {
+          "score": 2,
+          "assessment_row": 55,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O55",
+          "description_cell": "N55"
+        },
+        {
+          "score": 3,
+          "assessment_row": 56,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O56",
+          "description_cell": "N56"
+        }
+      ],
+      "results_row_in_sheet4": 21,
+      "action_row_in_sheet5": 20
+    },
+    {
+      "category": "Environmental Monitoring and Impact",
+      "scope_label": "M2: Use of environmental metrics in planning and reporting",
+      "scope_row": 27,
+      "question_code": "M2.1",
+      "question_row": 57,
+      "assessment_input_cell": "P57",
+      "type": "Task /\nactivity",
+      "question": "To what extent are environmental metrics integrated into the RI’s strategic planning or operational decision-making?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Climate Change",
+      "associated_metric": "Number of decisions/plans referencing environmental KPIs (optional, qualitative)",
+      "reference": "ISO 14001, ISO 14031, ESRS E1",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 57,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O57",
+          "description_cell": "N57"
+        },
+        {
+          "score": 2,
+          "assessment_row": 58,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O58",
+          "description_cell": "N58"
+        },
+        {
+          "score": 3,
+          "assessment_row": 59,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O59",
+          "description_cell": "N59"
+        }
+      ],
+      "results_row_in_sheet4": 22,
+      "action_row_in_sheet5": 21
+    },
+    {
+      "category": "Environmental Monitoring and Impact",
+      "scope_label": "M3: Lifecycle-based environmental impact assessment (based on LCA methodology)",
+      "scope_row": 28,
+      "question_code": "M3.1",
+      "question_row": 60,
+      "assessment_input_cell": "P60",
+      "type": "Task /\nactivity",
+      "question": "Has the RI conducted or applied lifecycle assessments (LCA) to evaluate its environmental impact across different phases, including monitoring of Global Warming Potential (GWP) and Cumulative Energy Demand (CED)?",
+      "lifecycle_phase": "Cross-cutting",
+      "environmental_dimension": "Climate Change",
+      "associated_metric": "Number or coverage of LCA studies conducted",
+      "reference": "ISO 14040, ISO 14044, ESRS E1",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 60,
+          "impact_magnitude": "High",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O60",
+          "description_cell": "N60"
+        },
+        {
+          "score": 2,
+          "assessment_row": 61,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O61",
+          "description_cell": "N61"
+        },
+        {
+          "score": 3,
+          "assessment_row": 62,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O62",
+          "description_cell": "N62"
+        }
+      ],
+      "results_row_in_sheet4": 23,
+      "action_row_in_sheet5": 22
+    },
+    {
+      "category": "Environmental Monitoring and Impact",
+      "scope_label": "M4: Use of WUE (Water Usage Effectiveness) or similar water metrics",
+      "scope_row": 29,
+      "question_code": "M4.1",
+      "question_row": 63,
+      "assessment_input_cell": "P63",
+      "type": "Output / Achievement",
+      "question": "Is WUE or any comparable metric tracked and used to assess the RI’s water efficiency performance?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Waste",
+      "associated_metric": "Water Usage Effectiveness (WUE)",
+      "reference": "ISO/IEC 30134-9, ISO 14046 (Water footprint)",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 63,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O63",
+          "description_cell": "N63"
+        },
+        {
+          "score": 2,
+          "assessment_row": 64,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O64",
+          "description_cell": "N64"
+        },
+        {
+          "score": 3,
+          "assessment_row": 65,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O65",
+          "description_cell": "N65"
+        }
+      ],
+      "results_row_in_sheet4": 24,
+      "action_row_in_sheet5": 23
+    },
+    {
+      "category": "Environmental Monitoring and Impact",
+      "scope_label": "M5: Implementation of monitoring tools/platforms",
+      "scope_row": 30,
+      "question_code": "M5.1",
+      "question_row": 66,
+      "assessment_input_cell": "P66",
+      "type": "Task /\nactivity",
+      "question": "Are dedicated tools or platforms in place for tracking, visualising, or reporting environmental performance?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14031, ISO 50001",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 66,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O66",
+          "description_cell": "N66"
+        },
+        {
+          "score": 2,
+          "assessment_row": 67,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O67",
+          "description_cell": "N67"
+        },
+        {
+          "score": 3,
+          "assessment_row": 68,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O68",
+          "description_cell": "N68"
+        }
+      ],
+      "results_row_in_sheet4": 25,
+      "action_row_in_sheet5": 24
+    },
+    {
+      "category": "Pollution, Waste, and Circularity",
+      "scope_label": "P1: Reduction of operational waste (incl. e-waste)",
+      "scope_row": 32,
+      "question_code": "P1.1",
+      "question_row": 70,
+      "assessment_input_cell": "P70",
+      "type": "Task /\nactivity",
+      "question": "Are practices in place to reduce operational waste generation, including e-waste from IT systems and equipment?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Waste",
+      "associated_metric": "Volume of e-waste or operational waste per year",
+      "reference": "WEEE Directive, ISO 14001, EU Circular Economy Action Plan",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 70,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O70",
+          "description_cell": "N70"
+        },
+        {
+          "score": 2,
+          "assessment_row": 71,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O71",
+          "description_cell": "N71"
+        },
+        {
+          "score": 3,
+          "assessment_row": 72,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O72",
+          "description_cell": "N72"
+        }
+      ],
+      "results_row_in_sheet4": 26,
+      "action_row_in_sheet5": 25
+    },
+    {
+      "category": "Pollution, Waste, and Circularity",
+      "scope_label": "P2: End-of-life management for equipment",
+      "scope_row": 33,
+      "question_code": "P2.1",
+      "question_row": 73,
+      "assessment_input_cell": "P73",
+      "type": "Task /\nactivity",
+      "question": "Does the RI apply defined procedures for the reuse, recycling, or proper disposal of decommissioned equipment?",
+      "lifecycle_phase": "Termination",
+      "environmental_dimension": "Waste",
+      "associated_metric": "% of equipment reused/recycled vs. disposed",
+      "reference": "WEEE Directive, ISO 14001, ISO 14006",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 73,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O73",
+          "description_cell": "N73"
+        },
+        {
+          "score": 2,
+          "assessment_row": 74,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O74",
+          "description_cell": "N74"
+        },
+        {
+          "score": 3,
+          "assessment_row": 75,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O75",
+          "description_cell": "N75"
+        }
+      ],
+      "results_row_in_sheet4": 27,
+      "action_row_in_sheet5": 26
+    },
+    {
+      "category": "Pollution, Waste, and Circularity",
+      "scope_label": "P3: Circular IT practices (reuse, remanufacturing, modularity)",
+      "scope_row": 34,
+      "question_code": "P3.1",
+      "question_row": 76,
+      "assessment_input_cell": "P76",
+      "type": "Task /\nactivity",
+      "question": "Are circular IT principles such as reuse, modularity, or refurbishment applied in procurement or infrastructure management?",
+      "lifecycle_phase": "Design",
+      "environmental_dimension": "Waste",
+      "associated_metric": "% of IT purchases meeting circularity criteria",
+      "reference": "EU Circular Economy Action Plan, ISO 20400 (Sustainable Procurement)",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 76,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O76",
+          "description_cell": "N76"
+        },
+        {
+          "score": 2,
+          "assessment_row": 77,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O77",
+          "description_cell": "N77"
+        },
+        {
+          "score": 3,
+          "assessment_row": 78,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O78",
+          "description_cell": "N78"
+        }
+      ],
+      "results_row_in_sheet4": 28,
+      "action_row_in_sheet5": 27
+    },
+    {
+      "category": "Pollution, Waste, and Circularity",
+      "scope_label": "P4: Pollution control (air, water, soil)",
+      "scope_row": 35,
+      "question_code": "P4.1",
+      "question_row": 79,
+      "assessment_input_cell": "P79",
+      "type": "Task /\nactivity",
+      "question": "Are measures in place to monitor and manage pollution risks related to air, water, or soil emissions from RI operations?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Waste",
+      "associated_metric": "Presence and scope of pollution monitoring and control measures",
+      "reference": " ISO 14001, EU Industrial Emissions Directive, ESRS E2",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 79,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O79",
+          "description_cell": "N79"
+        },
+        {
+          "score": 2,
+          "assessment_row": 80,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O80",
+          "description_cell": "N80"
+        },
+        {
+          "score": 3,
+          "assessment_row": 81,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O81",
+          "description_cell": "N81"
+        }
+      ],
+      "results_row_in_sheet4": 29,
+      "action_row_in_sheet5": 28
+    },
+    {
+      "category": "Pollution, Waste, and Circularity",
+      "scope_label": "P5: Use of low-impact or non-toxic materials",
+      "scope_row": 36,
+      "question_code": "P5.1",
+      "question_row": 82,
+      "assessment_input_cell": "P82",
+      "type": "Task /\nactivity",
+      "question": "Are environmental criteria applied when selecting materials or products, with preference for low-impact or non-toxic options?",
+      "lifecycle_phase": "Design",
+      "environmental_dimension": "Waste",
+      "associated_metric": "% of materials/products procured meeting low-impact criteria",
+      "reference": "ESPR (Ecodesign), EU Green Public Procurement Criteria, ISO 14024",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 82,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O82",
+          "description_cell": "N82"
+        },
+        {
+          "score": 2,
+          "assessment_row": 83,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O83",
+          "description_cell": "N83"
+        },
+        {
+          "score": 3,
+          "assessment_row": 84,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O84",
+          "description_cell": "N84"
+        }
+      ],
+      "results_row_in_sheet4": 30,
+      "action_row_in_sheet5": 29
+    },
+    {
+      "category": "Water and Ecosystems",
+      "scope_label": "W1: Water usage monitoring and reduction strategies",
+      "scope_row": 38,
+      "question_code": "W1.1",
+      "question_row": 86,
+      "assessment_input_cell": "P86",
+      "type": "Task /\nactivity",
+      "question": "To what extent does the RI monitor its water consumption and implement strategies to reduce it?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Water",
+      "associated_metric": "Total water use (m³/year), reduction trend (%)",
+      "reference": "ISO 14046, EU Water Framework Directive",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 86,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O86",
+          "description_cell": "N86"
+        },
+        {
+          "score": 2,
+          "assessment_row": 87,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O87",
+          "description_cell": "N87"
+        },
+        {
+          "score": 3,
+          "assessment_row": 88,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O88",
+          "description_cell": "N88"
+        }
+      ],
+      "results_row_in_sheet4": 31,
+      "action_row_in_sheet5": 30
+    },
+    {
+      "category": "Water and Ecosystems",
+      "scope_label": "W2: Impact on local ecosystems or biodiversity",
+      "scope_row": 39,
+      "question_code": "W2.1",
+      "question_row": 89,
+      "assessment_input_cell": "P89",
+      "type": "Task /\nactivity",
+      "question": "Does the RI assess and manage its potential impacts on local ecosystems or biodiversity, particularly for physical infrastructure?",
+      "lifecycle_phase": "Design",
+      "environmental_dimension": "Water",
+      "associated_metric": "N/A",
+      "reference": "EU Biodiversity Strategy, ISO 14001, ESRS E4",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 89,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O89",
+          "description_cell": "N89"
+        },
+        {
+          "score": 2,
+          "assessment_row": 90,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O90",
+          "description_cell": "N90"
+        },
+        {
+          "score": 3,
+          "assessment_row": 91,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O91",
+          "description_cell": "N91"
+        }
+      ],
+      "results_row_in_sheet4": 32,
+      "action_row_in_sheet5": 31
+    },
+    {
+      "category": "Water and Ecosystems",
+      "scope_label": "W3: Rainwater harvesting, reuse, or runoff management",
+      "scope_row": 40,
+      "question_code": "W3.1",
+      "question_row": 92,
+      "assessment_input_cell": "P92",
+      "type": "Output / Achievement",
+      "question": "Are there systems or practices in place for rainwater harvesting, water reuse, or managing stormwater runoff?",
+      "lifecycle_phase": "Design",
+      "environmental_dimension": "Water",
+      "associated_metric": "% of captured rainwater reused",
+      "reference": "EU Water Framework Directive, ISO 14046",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 92,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O92",
+          "description_cell": "N92"
+        },
+        {
+          "score": 2,
+          "assessment_row": 93,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O93",
+          "description_cell": "N93"
+        },
+        {
+          "score": 3,
+          "assessment_row": 94,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O94",
+          "description_cell": "N94"
+        }
+      ],
+      "results_row_in_sheet4": 33,
+      "action_row_in_sheet5": 32
+    },
+    {
+      "category": "Water and Ecosystems",
+      "scope_label": "W4: Water-based cooling systems and water efficiency strategies",
+      "scope_row": 41,
+      "question_code": "W4.1",
+      "question_row": 95,
+      "assessment_input_cell": "P95",
+      "type": "Task /\nactivity",
+      "question": "Does the RI use water-based cooling systems, and are measures in place to optimise their water efficiency and minimise environmental impact?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Water",
+      "associated_metric": "Water Usage Effectiveness (WUE), annual water withdrawal for cooling",
+      "reference": "ISO 30134-9, ESRS E3, EU CoC for Data Centres",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 95,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O95",
+          "description_cell": "N95"
+        },
+        {
+          "score": 2,
+          "assessment_row": 96,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O96",
+          "description_cell": "N96"
+        },
+        {
+          "score": 3,
+          "assessment_row": 97,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O97",
+          "description_cell": "N97"
+        }
+      ],
+      "results_row_in_sheet4": 34,
+      "action_row_in_sheet5": 33
+    },
+    {
+      "category": "Lifecycle Integration",
+      "scope_label": "L1: Sustainability embedded in the design phase",
+      "scope_row": 43,
+      "question_code": "L1.1",
+      "question_row": 99,
+      "assessment_input_cell": "P99",
+      "type": "Task /\nactivity",
+      "question": "To what extent are sustainability considerations integrated into the design and planning of new infrastructure or services?",
+      "lifecycle_phase": "Design",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14006, ESRS E1, ESPR, EU Taxonomy (Substantial Contribution Criteria)",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 99,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O99",
+          "description_cell": "N99"
+        },
+        {
+          "score": 2,
+          "assessment_row": 100,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O100",
+          "description_cell": "N100"
+        },
+        {
+          "score": 3,
+          "assessment_row": 101,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O101",
+          "description_cell": "N101"
+        }
+      ],
+      "results_row_in_sheet4": 35,
+      "action_row_in_sheet5": 34
+    },
+    {
+      "category": "Lifecycle Integration",
+      "scope_label": "L2: Consideration of sustainability during implementation",
+      "scope_row": 44,
+      "question_code": "L2.1",
+      "question_row": 102,
+      "assessment_input_cell": "P102",
+      "type": "Task /\nactivity",
+      "question": "Are sustainability criteria applied during the implementation or deployment of infrastructure components and systems?",
+      "lifecycle_phase": "Implementation",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14001, ISO 14006, EU GPP criteria",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 102,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O102",
+          "description_cell": "N102"
+        },
+        {
+          "score": 2,
+          "assessment_row": 103,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O103",
+          "description_cell": "N103"
+        },
+        {
+          "score": 3,
+          "assessment_row": 104,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O104",
+          "description_cell": "N104"
+        }
+      ],
+      "results_row_in_sheet4": 36,
+      "action_row_in_sheet5": 35
+    },
+    {
+      "category": "Lifecycle Integration",
+      "scope_label": "L3: Operational sustainability practices",
+      "scope_row": 45,
+      "question_code": "L3.1",
+      "question_row": 105,
+      "assessment_input_cell": "P105",
+      "type": "Task /\nactivity",
+      "question": "What sustainability practices are in place for the operation and maintenance of the RI’s infrastructure and services?",
+      "lifecycle_phase": "Operation",
+      "environmental_dimension": "Non-environmental",
+      "associated_metric": "N/A",
+      "reference": "ISO 14001, ISO 50001, ESRS, ESPR, EED",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 105,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O105",
+          "description_cell": "N105"
+        },
+        {
+          "score": 2,
+          "assessment_row": 106,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O106",
+          "description_cell": "N106"
+        },
+        {
+          "score": 3,
+          "assessment_row": 107,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O107",
+          "description_cell": "N107"
+        }
+      ],
+      "results_row_in_sheet4": 37,
+      "action_row_in_sheet5": 36
+    },
+    {
+      "category": "Lifecycle Integration",
+      "scope_label": "L4: Decommissioning/termination phase planning",
+      "scope_row": 46,
+      "question_code": "L4.1",
+      "question_row": 108,
+      "assessment_input_cell": "P108",
+      "type": "Task /\nactivity",
+      "question": "Does the RI include environmental considerations in its decommissioning or termination plans for infrastructure or services?",
+      "lifecycle_phase": "Termination",
+      "environmental_dimension": "Waste",
+      "associated_metric": "N/A",
+      "reference": "ISO 14001, WEEE Directive, ISO 14006",
+      "answer_options": [
+        {
+          "score": 1,
+          "assessment_row": 108,
+          "impact_magnitude": "High",
+          "impact_likelihood": "High",
+          "recommended_action_cell": "O108",
+          "description_cell": "N108"
+        },
+        {
+          "score": 2,
+          "assessment_row": 109,
+          "impact_magnitude": "Medium",
+          "impact_likelihood": "Medium",
+          "recommended_action_cell": "O109",
+          "description_cell": "N109"
+        },
+        {
+          "score": 3,
+          "assessment_row": 110,
+          "impact_magnitude": "Low",
+          "impact_likelihood": "Low",
+          "recommended_action_cell": "O110",
+          "description_cell": "N110"
+        }
+      ],
+      "results_row_in_sheet4": 38,
+      "action_row_in_sheet5": 37
+    }
+  ],
+  "issues": {
+    "placeholder_string_mismatch": {
+      "description": "Workbook uses multiple visually similar placeholder values, which can break equality checks when ported.",
+      "observed_values": [
+        "Select.... ",
+        "Select…. "
+      ]
+    },
+    "formula_reference_anomalies": [
+      {
+        "sheet": "4. Priority&Capability Results",
+        "cell": "G12",
+        "issue": "Uses D12=\"No\" instead of C12=\"No\" for scope check."
+      },
+      {
+        "sheet": "4. Priority&Capability Results",
+        "cell": "G25",
+        "issue": "Uses D25=\"No\" instead of C25=\"No\" for scope check."
+      },
+      {
+        "sheet": "4. Priority&Capability Results",
+        "cell": "G30",
+        "issue": "Uses D30=\"No\" instead of C30=\"No\" for scope check."
+      },
+      {
+        "sheet": "5-6. Action Plan & Monitoring",
+        "cell": "H35",
+        "issue": "Uses P105=2 in nested IF for L2.1 instead of P102=2."
+      }
+    ],
+    "xlookup_modern_excel": "XLOOKUP, FILTER, UNIQUE, LET are used. Reimplement in app logic rather than relying on workbook calc."
+  }
+}

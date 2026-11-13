@@ -7,9 +7,14 @@ import type {
   ScopeSelection,
   AssessmentAnswer,
 } from "@/src/lib/saq/engine/results";
+import type { AssessmentResults } from "@/src/lib/saq/engine/results";
+import { themeReadinessFromCounts } from "@/src/lib/saq/engine/interpretation";
 import type { CapabilityScore } from "@/src/lib/saq/engine/scoring";
+import { inScopeTimeLabel } from "@/src/lib/auth/organisation-profile";
+import { PriorityBadge } from "./PriorityBadge";
 import { SectionHeader } from "./SectionHeader";
 import { CapabilitySelector } from "./CapabilitySelector";
+import { QuestionHelp } from "./QuestionGuidance";
 import { SummaryCard } from "./SummaryCard";
 
 interface QuestionnaireStepProps {
@@ -19,6 +24,7 @@ interface QuestionnaireStepProps {
   scopeSelections: ScopeSelection[];
   answers: AssessmentAnswer[];
   onChange: (answers: AssessmentAnswer[]) => void;
+  assessmentResults?: AssessmentResults;
   readOnly?: boolean;
 }
 
@@ -29,6 +35,7 @@ export function QuestionnaireStep({
   scopeSelections,
   answers,
   onChange,
+  assessmentResults,
   readOnly = false,
 }: QuestionnaireStepProps) {
   const inScopeScopeIds = new Set(
@@ -50,8 +57,12 @@ export function QuestionnaireStep({
   const getAnswer = (questionId: string): AssessmentAnswer | undefined =>
     answers.find((a) => a.questionId === questionId);
 
-  const upsertAnswer = (questionId: string, score: CapabilityScore) => {
+  const upsertAnswer = (questionId: string, score: CapabilityScore | undefined) => {
     if (readOnly) return;
+    if (score === undefined) {
+      onChange(answers.filter((a) => a.questionId !== questionId));
+      return;
+    }
     const existing = getAnswer(questionId);
     const base: AssessmentAnswer =
       existing ?? {
@@ -110,7 +121,7 @@ export function QuestionnaireStep({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <SectionHeader
           title="Questionnaire"
-          subtitle="Answer each in-scope question with a capability level (1–3). Level 1 = initial; 3 = mature."
+          subtitle={`Answer each in-scope question with the current capability level (1–3). Level 1 = initial; 2 = developing; 3 = established. Questions marked * are required. ${inScopeTimeLabel(totalInScope)}`}
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <SummaryCard
@@ -135,6 +146,12 @@ export function QuestionnaireStep({
           const themeAnswered = getThemeAnsweredCount(theme.id);
           const themePct =
             themeTotal === 0 ? 0 : Math.round((themeAnswered / themeTotal) * 100);
+          const themeSummary = assessmentResults?.themeResults.find(
+            (item) => item.themeId === theme.id
+          )?.summary;
+          const themeReadiness = themeSummary
+            ? themeReadinessFromCounts(themeSummary)
+            : null;
           return (
             <section
               key={theme.id}
@@ -146,6 +163,7 @@ export function QuestionnaireStep({
                 </h3>
                 <span className="text-xs font-medium text-slate-600">
                   {themeAnswered} / {themeTotal} answered ({themePct}%)
+                  {themeReadiness ? ` · Maturity ${themeReadiness.level}` : ""}
                 </span>
               </div>
               <div className="divide-y divide-slate-100">
@@ -167,6 +185,16 @@ export function QuestionnaireStep({
                       <ul className="space-y-4">
                         {scopeQuestions.map((q) => {
                           const ans = getAnswer(q.id);
+                          const questionResult = assessmentResults?.themeResults
+                            .flatMap((themeResult) => themeResult.scopeResults)
+                            .flatMap((scopeResult) => scopeResult.questionResults)
+                            .find((item) => item.questionId === q.id);
+                          const target = scopeSelections.find((item) => item.scopeId === q.scopeId)
+                            ?.targetCapability;
+                          const gap =
+                            target !== undefined && ans?.selectedScore !== undefined
+                              ? target - ans.selectedScore
+                              : undefined;
                           return (
                             <li
                               key={q.id}
@@ -188,6 +216,10 @@ export function QuestionnaireStep({
                                     )}
                                   </div>
                                   <p className="mt-1 text-sm font-medium text-slate-900">
+                                    <span className="mr-1 text-red-600" aria-hidden="true">
+                                      *
+                                    </span>
+                                    <span className="sr-only">Required. </span>
                                     {q.text}
                                   </p>
                                   {q.reference && (
@@ -195,9 +227,11 @@ export function QuestionnaireStep({
                                       Reference: {q.reference}
                                     </p>
                                   )}
+                                  <QuestionHelp question={q} selectedScore={ans?.selectedScore} />
                                 </div>
-                                <div className="shrink-0 lg:pl-4">
+                                <div className="w-full shrink-0 lg:w-80 lg:max-w-md lg:pl-4">
                                   <CapabilitySelector
+                                    answerOptions={q.answerOptions}
                                     value={ans?.selectedScore}
                                     onChange={(score) =>
                                       upsertAnswer(q.id, score)
@@ -205,6 +239,26 @@ export function QuestionnaireStep({
                                     showNotAnswered={true}
                                     disabled={readOnly}
                                   />
+                                  {ans?.selectedScore !== undefined && (
+                                    <div className="mt-3 space-y-1 text-xs text-slate-600">
+                                      <p>
+                                        Gap to target:{" "}
+                                        <span className="font-medium text-slate-900">
+                                          {target === undefined
+                                            ? "No target set"
+                                            : gap !== undefined && gap <= 0
+                                              ? "Target met"
+                                              : `${gap} level${gap === 1 ? "" : "s"} below target`}
+                                        </span>
+                                      </p>
+                                      {questionResult?.improvementPriority && (
+                                        <p className="flex items-center gap-2">
+                                          Gap priority
+                                          <PriorityBadge level={questionResult.improvementPriority} />
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </li>

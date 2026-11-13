@@ -17,9 +17,15 @@ export function canEditAssessment(role: AssessmentRole | null | undefined): bool
   return role === "owner" || role === "editor";
 }
 
-/** New saved versions (snapshots) may be created by owner or editor only. */
+/** New saved versions may be created by the assessment owner. */
 export function canCreateAssessmentVersion(role: AssessmentRole | null | undefined): boolean {
-  return role === "owner" || role === "editor";
+  return role === "owner";
+}
+
+export function isAssignableCollaboratorRole(
+  value: string | null | undefined
+): value is Exclude<AssessmentRole, "owner"> {
+  return value === "editor" || value === "reviewer" || value === "viewer";
 }
 
 export type AssessmentVersionStatus = "draft" | "submitted" | "reviewed" | "archived";
@@ -46,8 +52,12 @@ export function canManageCollaborators(role: AssessmentRole | null | undefined):
   return role === "owner";
 }
 
+export function canDeleteAssessment(role: AssessmentRole | null | undefined): boolean {
+  return role === "owner";
+}
+
 export function canExportReport(role: AssessmentRole | null | undefined): boolean {
-  return canViewAssessment(role);
+  return role === "owner";
 }
 
 export function canAccessDashboard(role: AssessmentRole | null | undefined): boolean {

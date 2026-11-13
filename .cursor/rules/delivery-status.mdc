@@ -1,0 +1,18 @@
+---
+description: Local delivery status and the next planned phases
+alwaysApply: true
+---
+
+# Delivery status
+
+Local only. Do not deploy until the user asks. After each product change, update this rule and `docs/SAQ_PROJECT_CONTEXT.md` section 7.
+
+Done locally: signup profile and password policy; Workspace hidden until login; version rename/delete; per-topic target comparison and live gap feedback; sign-in says incorrect email or password, and asks an unverified account to confirm email; confirmation and password reset are emailed when SMTP_HOST is set, and signup does not show the link; Google and ORCID buttons are on login and signup and start sign-in when that provider's client id and secret are set; ORCID without an email asks for an address and emails a confirmation link; Forgot password emails a link to set a new password; version-scoped roles; standards catalog on Workspace (not the dashboard), filtered by category and industry; one Help panel per question; Evidence step with checklist ticks, notes, and files. Evidence rows read “Evidence required:” under the question code, then “Current level” and “Target level”. A checklist level is named once (“To achieve level 2:”) and the lines under it are numbered. Action plan shows effort as S/M/L for the size of the work (stored as Low/Medium/High) and labels the calculated timing When to act (Immediate / Urgent / Planned) on the action plan, dashboard, and report. It suggests effort only when the field is empty, includes the gap in that timing, takes an assignee from collaborators or a typed team name, and labels remarks Next step. Improvement-priority scores are unchanged. Postgres and Adminer are published on 127.0.0.1 only.
+
+Still open:
+
+- Phase 9 — Hide on-prem or cloud-only topics only after applicability tags are reviewed. Tags may exist on scope items; scoring ignores them.
+- Help is one collapsed panel per question. Column N is the level description. Column R is evidence expected. Every theme has checklist lines: no level 1 line, one level 2 line, and two level 3 lines. On the Evidence step, questions stay collapsed until opened.
+- Real SMTP, Google, and ORCID values stay in env files the user fills. Do not invent them. Without SMTP_HOST, signup and password reset cannot send mail.
+
+A container restart does not pick up source changes. Use `npm run docker:up`.

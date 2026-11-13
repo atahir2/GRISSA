@@ -1,0 +1,33 @@
+node_modules
+.next
+.git
+.gitignore
+
+# Secrets & local env (never bake into images)
+.env
+.env.*
+!.env.docker.example
+
+# Tooling / audits
+.cursor
+.idea
+*.log
+logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+supabase-audit.txt
+
+# Uploaded or generated audit artefacts
+**/uploads
+**/tmp
+**/temp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests / coverage (if added later)
+coverage
+.nyc_output

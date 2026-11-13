@@ -1,0 +1,284 @@
+{
+  "standards": [
+    {
+      "id": "csrd",
+      "name": "Corporate Sustainability Reporting Directive (CSRD)",
+      "kind": "directive",
+      "summary": "Sets which organisations must publish a sustainability report and how that report is assured. Research organisations and operators in scope use it to plan what the baseline must be ready to evidence.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2464",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "esrs",
+      "name": "European Sustainability Reporting Standards (ESRS)",
+      "kind": "regulation",
+      "summary": "The reporting standards under the CSRD. They describe the environmental and governance disclosures a datacenter, research infrastructure, or organisation may need to prepare.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R2772",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "eed",
+      "name": "Energy Efficiency Directive (EED)",
+      "kind": "directive",
+      "summary": "EU rules on energy efficiency, including reporting expectations for large energy users and datacenters. Useful when the baseline covers energy management and disclosure.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L1791",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "espr",
+      "name": "Ecodesign for Sustainable Products Regulation (ESPR)",
+      "kind": "regulation",
+      "summary": "Sets ecodesign and product-information rules for goods placed on the EU market. Relevant when procurement and equipment choices are part of the baseline.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1781",
+      "audiences": ["Org", "RI", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "weee",
+      "name": "Waste Electrical and Electronic Equipment Directive (WEEE)",
+      "kind": "directive",
+      "summary": "Rules for collecting and treating waste electrical equipment. It guides end-of-life handling of IT and datacenter equipment.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32012L0019",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "iso-14001",
+      "name": "ISO 14001",
+      "kind": "standard",
+      "summary": "Environmental management system standard. It is the usual reference for how a research infrastructure or organisation runs environmental policy, roles, and improvement.",
+      "url": "https://www.iso.org/standard/60857.html",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-14040",
+      "name": "ISO 14040 and ISO 14044",
+      "kind": "standard",
+      "summary": "Life-cycle assessment principles and requirements. Use them when the baseline looks at impacts across design, operation, and end of life.",
+      "url": "https://www.iso.org/standard/37456.html",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-14006",
+      "name": "ISO 14006",
+      "kind": "standard",
+      "summary": "Guidelines for bringing environmental aspects into design. Relevant for equipment, services, and facilities that are still being specified.",
+      "url": "https://www.iso.org/standard/72644.html",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-14024",
+      "name": "ISO 14024",
+      "kind": "standard",
+      "summary": "Principles for Type I environmental labels. It helps when procurement looks for independently certified products.",
+      "url": "https://www.iso.org/standard/72458.html",
+      "audiences": ["Org", "RI"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-14031",
+      "name": "ISO 14031",
+      "kind": "standard",
+      "summary": "Guidance on environmental performance evaluation. It supports choosing indicators and checking whether the recorded level is backed by measurement.",
+      "url": "https://www.iso.org/standard/81453.html",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-14046",
+      "name": "ISO 14046",
+      "kind": "standard",
+      "summary": "Water-footprint principles and requirements. Use it when cooling water or site water use is in the baseline.",
+      "url": "https://www.iso.org/standard/43263.html",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "iso-14063",
+      "name": "ISO 14063",
+      "kind": "standard",
+      "summary": "Guidance on environmental communication. It is the reference for how results and claims are explained to partners and the public.",
+      "url": "https://www.iso.org/standard/71207.html",
+      "audiences": ["RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-14064",
+      "name": "ISO 14064",
+      "kind": "standard",
+      "summary": "Greenhouse-gas quantification and reporting at organisation level. It sits beside the GHG Protocol when the baseline includes a carbon inventory.",
+      "url": "https://www.iso.org/standard/66453.html",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-20400",
+      "name": "ISO 20400",
+      "kind": "standard",
+      "summary": "Guidance on sustainable procurement. It helps a research organisation or operator set expectations for suppliers and purchased services.",
+      "url": "https://www.iso.org/standard/63026.html",
+      "audiences": ["Org", "RI", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "iso-50001",
+      "name": "ISO 50001",
+      "kind": "standard",
+      "summary": "Energy management system standard. It is the usual reference for a structured approach to energy performance in facilities and datacenters.",
+      "url": "https://www.iso.org/standard/69426.html",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "iso-iec-30134",
+      "name": "ISO/IEC 30134",
+      "kind": "standard",
+      "summary": "Key performance indicators for datacenters, including power and water metrics. It applies where the organisation runs or specifies datacenter capacity.",
+      "url": "https://www.iso.org/standard/67019.html",
+      "audiences": ["DC"],
+      "industries": ["datacenter-operator", "research-infrastructure", "higher-education", "public-research"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "en-50600",
+      "name": "EN 50600",
+      "kind": "standard",
+      "summary": "European series for datacenter facilities and their environmental key performance indicators. It guides design and operation of on-prem and colocation sites.",
+      "url": "https://www.cencenelec.eu/areas-of-work/cen-cenelec-topics/data-centres/",
+      "audiences": ["DC"],
+      "industries": ["datacenter-operator", "research-infrastructure", "higher-education", "public-research"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "eu-coc-dc",
+      "name": "EU Code of Conduct for Data Centre Energy Efficiency",
+      "kind": "standard",
+      "summary": "A voluntary European code of expected energy-efficiency practices for datacenters. Participants use it as a practical checklist beside the baseline.",
+      "url": "https://e3p.jrc.ec.europa.eu/communities/data-centres-code-conduct",
+      "audiences": ["DC"],
+      "industries": ["datacenter-operator", "research-infrastructure", "higher-education", "public-research"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "emas",
+      "name": "EMAS",
+      "kind": "certification",
+      "summary": "The EU eco-management and audit scheme. An organisation can use it when it wants a verified environmental management system and a public statement.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32009R1221",
+      "audiences": ["Org", "RI"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "ghg-protocol",
+      "name": "GHG Protocol",
+      "kind": "standard",
+      "summary": "The common method for corporate greenhouse-gas inventories, including purchased electricity. It is the usual companion to carbon figures in the baseline.",
+      "url": "https://ghgprotocol.org/standards",
+      "audiences": ["RI", "Org", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "red",
+      "name": "Renewable Energy Directive",
+      "kind": "directive",
+      "summary": "EU rules on renewable energy targets and claims. Relevant when the baseline records renewable electricity or renewable heat.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L2413",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "electricity-directive",
+      "name": "Electricity Directive",
+      "kind": "directive",
+      "summary": "EU rules for the electricity market, including how consumers take part. It is background for power-sourcing and flexibility topics.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019L0944",
+      "audiences": ["DC", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "gpp",
+      "name": "EU Green Public Procurement",
+      "kind": "standard",
+      "summary": "Voluntary EU criteria for buying goods and services with a lower environmental impact. Research organisations use them when tenders need a sustainability clause.",
+      "url": "https://green-business.ec.europa.eu/green-public-procurement_en",
+      "audiences": ["Org", "RI"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "ceap",
+      "name": "EU Circular Economy Action Plan",
+      "kind": "standard",
+      "summary": "The EU policy frame for keeping products and materials in use. It guides waste, reuse, and procurement topics in the baseline.",
+      "url": "https://environment.ec.europa.eu/strategy/circular-economy-action-plan_en",
+      "audiences": ["Org", "RI", "DC"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    },
+    {
+      "id": "ied",
+      "name": "Industrial Emissions Directive",
+      "kind": "directive",
+      "summary": "EU rules on pollution prevention for industrial installations. It is a reference when a site has permitted emissions or significant local pollution control.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024L1785",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "wfd",
+      "name": "Water Framework Directive",
+      "kind": "directive",
+      "summary": "The EU framework for protecting rivers, lakes, and groundwater. It is the policy context for water withdrawal and discharge at a site.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32000L0060",
+      "audiences": ["DC", "RI", "Org"],
+      "industries": ["any"],
+      "operatingModels": ["on-prem", "hybrid", "colocation"]
+    },
+    {
+      "id": "biodiversity-strategy",
+      "name": "EU Biodiversity Strategy for 2030",
+      "kind": "standard",
+      "summary": "The EU strategy for restoring nature. It is the context for land, habitat, and site-ecology topics in a research campus or facility baseline.",
+      "url": "https://environment.ec.europa.eu/strategy/biodiversity-strategy-2030_en",
+      "audiences": ["RI", "Org"],
+      "industries": ["research-infrastructure", "higher-education", "public-research", "other"],
+      "operatingModels": ["on-prem", "hybrid", "no-datacenter"]
+    },
+    {
+      "id": "eu-taxonomy",
+      "name": "EU Taxonomy",
+      "kind": "regulation",
+      "summary": "The EU classification of economic activities that can count as environmentally sustainable. It matters when a report or investment case needs a taxonomy alignment statement.",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852",
+      "audiences": ["Org", "DC", "RI"],
+      "industries": ["any"],
+      "operatingModels": ["any"]
+    }
+  ]
+}

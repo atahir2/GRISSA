@@ -1,0 +1,116 @@
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { getDb } from "@/src/lib/db/drizzle";
+import { normalizeEmail } from "@/src/lib/auth/email-address";
+import { smtpConfigured, smtpNotReadyMessage } from "@/src/lib/auth/mail";
+import { validateOrganisationProfile } from "@/src/lib/auth/organisation-profile";
+import { validatePassword } from "@/src/lib/auth/password-policy";
+import { issueVerificationLink, sendVerificationEmail } from "@/src/lib/auth/verification-email";
+import { profiles, users, verificationTokens } from "../../../../../drizzle/schema";
+
+async function deleteNewAccount(userId: string, email: string) {
+  const db = getDb();
+  await db.delete(verificationTokens).where(eq(verificationTokens.identifier, email));
+  await db.delete(profiles).where(eq(profiles.id, userId));
+  await db.delete(users).where(eq(users.id, userId));
+}
+
+export async function POST(request: Request) {
+  let createdUserId: string | null = null;
+  let createdEmail: string | null = null;
+  let body: {
+    email?: string;
+    password?: string;
+    fullName?: string;
+    organisationName?: string;
+    organisationSize?: string;
+    industry?: string;
+    country?: string;
+  };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return NextResponse.json({ error: "Registration failed." }, { status: 400 });
+  }
+
+  try {
+    const email = normalizeEmail(body.email);
+    const password = String(body.password ?? "");
+    const fullName = String(body.fullName ?? "").trim();
+    const organisationName = String(body.organisationName ?? "").trim();
+    const organisationSize = String(body.organisationSize ?? "").trim();
+    const industry = String(body.industry ?? "").trim();
+    const country = String(body.country ?? "").trim();
+
+    if (!email || !password) {
+      return NextResponse.json({ error: "Enter a valid email address and a password." }, { status: 400 });
+    }
+    if (!fullName) {
+      return NextResponse.json({ error: "Full name is required." }, { status: 400 });
+    }
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
+    }
+    const profileError = validateOrganisationProfile({
+      organisationName,
+      organisationSize,
+      industry,
+      country,
+    });
+    if (profileError) {
+      return NextResponse.json({ error: profileError }, { status: 400 });
+    }
+    if (!smtpConfigured()) {
+      return NextResponse.json({ error: smtpNotReadyMessage() }, { status: 503 });
+    }
+
+    const db = getDb();
+    const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+    if (existing) {
+      return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email,
+        name: fullName,
+        passwordHash,
+        emailVerified: null,
+      })
+      .returning({ id: users.id });
+
+    if (!newUser?.id) {
+      return NextResponse.json({ error: "Registration failed." }, { status: 500 });
+    }
+    createdUserId = newUser.id;
+    createdEmail = email;
+
+    await db.insert(profiles).values({
+      id: newUser.id,
+      fullName,
+      organisationName,
+      organisationSize,
+      industry,
+      country,
+    });
+
+    const issued = await issueVerificationLink(email);
+    if (issued.deliver) {
+      await sendVerificationEmail(email, issued.url);
+    }
+    return NextResponse.json({ ok: true, emailSent: true });
+  } catch (error) {
+    console.error("Registration failed", error);
+    if (createdUserId && createdEmail) {
+      await deleteNewAccount(createdUserId, createdEmail).catch(() => undefined);
+    }
+    return NextResponse.json(
+      { error: "The account was not created because the confirmation email could not be sent." },
+      { status: 502 }
+    );
+  }
+}
