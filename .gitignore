@@ -17,3 +17,8 @@ supabase-audit.txt
 .env.production
 dump/
 data/evidence/
+
+.venv
+godaddy-steps.md
+nginx_config
+redirect_dns.sh

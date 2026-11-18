@@ -4,8 +4,9 @@ import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { eq } from "drizzle-orm";
+import { withBasePath } from "@/src/lib/base-path";
 import { getDb } from "@/src/lib/db/drizzle";
-import { profiles, users } from "../../../drizzle/schema";
+import { accounts, profiles, sessions, users, verificationTokens } from "../../../drizzle/schema";
 import { AUTH_ERROR } from "./auth-errors";
 import { getAuthSecret } from "./auth-secret";
 import Orcid from "./orcid";
@@ -18,7 +19,12 @@ import { orcidEmailCollectionUrl } from "./orcid-pending";
  */
 function getDrizzleAuthAdapter() {
   if (!process.env.DATABASE_URL) return undefined;
-  return DrizzleAdapter(getDb());
+  return DrizzleAdapter(getDb(), {
+    usersTable: users,
+    accountsTable: accounts,
+    sessionsTable: sessions,
+    verificationTokensTable: verificationTokens,
+  });
 }
 
 function providerReady(id: string | undefined, secret: string | undefined): boolean {
@@ -85,8 +91,9 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   pages: {
-    signIn: "/login",
-    error: "/login",
+    // NextAuth emits these as root-absolute Locations. Include the base path or nginx 404s.
+    signIn: withBasePath("/login"),
+    error: withBasePath("/login"),
   },
   callbacks: {
     async signIn({ user, account }) {
@@ -95,6 +102,25 @@ export const authOptions: NextAuthOptions = {
       const orcid = String(account.providerAccountId ?? "").trim();
       if (!orcid) return false;
       return orcidEmailCollectionUrl(orcid, user.name ?? null);
+    },
+    redirect({ url, baseUrl }) {
+      const origin = baseUrl.replace(/\/$/, "");
+      const base = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+      const withPrefix = (path: string) => {
+        if (!base || path === base || path.startsWith(`${base}/`)) return path;
+        return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+      };
+      if (url.startsWith("/")) return `${origin}${withPrefix(url)}`;
+      try {
+        const target = new URL(url);
+        if (target.origin === origin) {
+          target.pathname = withPrefix(target.pathname);
+          return target.toString();
+        }
+      } catch {
+        // Fall through to the app home.
+      }
+      return `${origin}${withPrefix("/saq")}`;
     },
     session({ session, token }) {
       if (session.user) {

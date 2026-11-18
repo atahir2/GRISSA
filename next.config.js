@@ -38,6 +38,25 @@ const nextConfig = {
       },
     ];
   },
+
+  /**
+   * NEXTAUTH_URL includes the site prefix (https://host/grissa). NextAuth then
+   * uses that prefix as its auth base, so Google returns to /grissa/callback/google.
+   * The handler is mounted at /api/auth/*. These rewrites connect the two.
+   */
+  async rewrites() {
+    return [
+      { source: "/signin", destination: "/api/auth/signin" },
+      { source: "/signin/:path*", destination: "/api/auth/signin/:path*" },
+      { source: "/callback/:path*", destination: "/api/auth/callback/:path*" },
+      { source: "/signout", destination: "/api/auth/signout" },
+      { source: "/session", destination: "/api/auth/session" },
+      { source: "/csrf", destination: "/api/auth/csrf" },
+      { source: "/providers", destination: "/api/auth/providers" },
+      { source: "/error", destination: "/api/auth/error" },
+      { source: "/_log", destination: "/api/auth/_log" },
+    ];
+  },
 };
 
 module.exports = nextConfig;

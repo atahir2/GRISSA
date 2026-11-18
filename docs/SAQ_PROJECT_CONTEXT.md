@@ -117,6 +117,7 @@ Local implementation through guided help. Production upload waits for an explici
 | Step | Status |
 |------|--------|
 | Profile, access, versions, topic comparison, email confirmation, password reset, Google and ORCID sign-in, version-scoped roles, Workspace standards portal | Done locally |
+| OpenGreenCompute landing page | Done locally. Static `static/landing_index.html`, EU/GreenDIGIT assets, project introduction, GRISSA and EIMPS source links. Served by Nginx at the domain root. Homepage links to `static/commons.html` at `/greendigit-commons` (with or without a trailing slash); both pages use existing root-level logo assets. Nginx route snippet: `scripts/nginx-commons.example.conf`. |
 | Guided help | One collapsed Help panel per question. Column N is the level description. Column R is evidence expected. Extra Governance notes stay inside that panel. |
 | Phase 7 Evidence | Done locally. Questions stay collapsed until opened. Every theme has checklist lines (one for level 2, two for level 3). Each level is headed once (“To achieve level 2:”) and the lines under it are numbered. The row shows Current level and Target level. Migration `0005_assessment_evidence` and the `saq_evidence` volume are required. |
 | Phase 8 Action plan | Done locally. Effort (S/M/L) is the size of the work. When to act (Immediate / Urgent / Planned) is the calculated timing and is labeled that way on every screen. Assignee and Next step. |

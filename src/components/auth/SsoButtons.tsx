@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
-import { appFetch } from "@/src/lib/base-path";
+import { appFetch, withBasePath } from "@/src/lib/base-path";
+
+/** NextAuth joins a leading-slash callback onto the site origin, which drops the base path. */
+function oauthReturnPath(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const base = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+  if (!base || normalized === base || normalized.startsWith(`${base}/`)) return normalized;
+  return withBasePath(normalized);
+}
 
 const buttonClass =
   "flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-50";
@@ -40,7 +48,7 @@ export function SsoButtons({ callbackUrl = "/saq" }: { callbackUrl?: string }) {
       );
       return;
     }
-    void signIn(provider, { callbackUrl });
+    void signIn(provider, { callbackUrl: oauthReturnPath(callbackUrl) });
   }
 
   return (
