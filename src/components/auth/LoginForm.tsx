@@ -164,7 +164,7 @@ export function LoginForm({ nextPath, initialAuthError, initialInfo, offerResend
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <SsoButtons callbackUrl={nextPath || "/saq"} />
+        <SsoButtons mode="login" callbackUrl={nextPath || "/saq"} />
         <p className="mt-6 text-center text-sm text-slate-600">
           No account?{" "}
           <Link href="/signup" className="font-medium text-emerald-700 hover:text-emerald-800">

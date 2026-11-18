@@ -19,8 +19,18 @@ export function publicAppUrl(): string {
   return nextAuth || "http://localhost:3000";
 }
 
+/**
+ * `new URL("/login", "https://host/grissa")` drops `/grissa` because a leading slash
+ * replaces the base path. Build the absolute URL from the full public prefix instead.
+ */
+export function appPathUrl(pathname: string): URL {
+  const base = publicAppUrl().replace(/\/$/, "");
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  return new URL(`${base}${path}`);
+}
+
 function appUrl(pathname: string, params: Record<string, string>): string {
-  const url = new URL(pathname, publicAppUrl());
+  const url = appPathUrl(pathname);
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }

@@ -1,7 +1,7 @@
 import { encode, decode } from "next-auth/jwt";
 import { getAuthSecret } from "./auth-secret";
 import { isOrcidId } from "./orcid";
-import { publicAppUrl } from "./verification-email";
+import { appPathUrl } from "./verification-email";
 
 const SALT = "grissa-orcid-email";
 const MAX_AGE_SECONDS = 15 * 60;
@@ -17,7 +17,7 @@ export async function orcidEmailCollectionUrl(orcid: string, name: string | null
     salt: SALT,
     maxAge: MAX_AGE_SECONDS,
   });
-  const url = new URL("/signup/orcid", publicAppUrl());
+  const url = appPathUrl("/signup/orcid");
   url.searchParams.set("pending", pending);
   return url.toString();
 }

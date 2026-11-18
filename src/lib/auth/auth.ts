@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { withBasePath } from "@/src/lib/base-path";
 import { getDb } from "@/src/lib/db/drizzle";
 import { accounts, profiles, sessions, users, verificationTokens } from "../../../drizzle/schema";
@@ -11,6 +12,15 @@ import { AUTH_ERROR } from "./auth-errors";
 import { getAuthSecret } from "./auth-secret";
 import Orcid from "./orcid";
 import { orcidEmailCollectionUrl } from "./orcid-pending";
+import { appPathUrl } from "./verification-email";
+
+function oauthIntent(): "login" | "signup" {
+  try {
+    return cookies().get("grissa_oauth_intent")?.value === "signup" ? "signup" : "login";
+  } catch {
+    return "login";
+  }
+}
 
 /**
  * Only wire Drizzle when DATABASE_URL is set. `next build` (e.g. Docker) often runs
@@ -97,11 +107,37 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider !== "orcid") return true;
-      if (user.email?.trim()) return true;
-      const orcid = String(account.providerAccountId ?? "").trim();
-      if (!orcid) return false;
-      return orcidEmailCollectionUrl(orcid, user.name ?? null);
+      const provider = account?.provider;
+      if (provider !== "google" && provider !== "orcid") return true;
+
+      const providerAccountId = String(account?.providerAccountId ?? "").trim();
+      const email = user.email?.trim().toLowerCase() ?? "";
+      const db = process.env.DATABASE_URL ? getDb() : null;
+      const [linked] =
+        db && providerAccountId
+          ? await db
+              .select({ userId: accounts.userId })
+              .from(accounts)
+              .where(and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)))
+              .limit(1)
+          : [];
+      const [byEmail] =
+        db && email
+          ? await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1)
+          : [];
+      const known = Boolean(linked || byEmail);
+
+      if (oauthIntent() === "login" && !known) {
+        const signup = appPathUrl("/signup");
+        signup.searchParams.set("notice", "no-account");
+        return signup.toString();
+      }
+
+      if (provider === "orcid" && !email && !linked) {
+        if (!providerAccountId) return false;
+        return orcidEmailCollectionUrl(providerAccountId, user.name ?? null);
+      }
+      return true;
     },
     redirect({ url, baseUrl }) {
       const origin = baseUrl.replace(/\/$/, "");

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { normalizeEmail } from "@/src/lib/auth/email-address";
-import { confirmOrcidLink, publicAppUrl } from "@/src/lib/auth/verification-email";
+import { appPathUrl, confirmOrcidLink } from "@/src/lib/auth/verification-email";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const email = normalizeEmail(url.searchParams.get("email"));
   const token = String(url.searchParams.get("token") ?? "").trim();
-  const login = new URL("/login", publicAppUrl());
+  const login = appPathUrl("/login");
 
   if (!email || !token) {
     login.searchParams.set("error", "Confirmation link is incomplete.");

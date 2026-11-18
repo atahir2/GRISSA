@@ -18,7 +18,7 @@ import { appFetch } from "@/src/lib/base-path";
 const fieldClass =
   "mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
 
-export function SignupForm() {
+export function SignupForm({ notice }: { notice?: string }) {
   const router = useRouter();
   const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
@@ -106,6 +106,11 @@ export function SignupForm() {
     <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
       <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Create an account</h1>
+        {notice && (
+          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
+            {notice}
+          </p>
+        )}
         <p className="mt-2 text-sm text-slate-600">
           Sign up with email and password, or continue with Google or ORCID, to save and manage your assessments.
         </p>
@@ -253,7 +258,7 @@ export function SignupForm() {
             {loading ? "Creating account…" : "Create account"}
           </button>
         </form>
-        <SsoButtons />
+        <SsoButtons mode="signup" />
         <p className="mt-6 text-center text-sm text-slate-600">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-emerald-700 hover:text-emerald-800">
