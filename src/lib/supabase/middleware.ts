@@ -12,7 +12,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 export function createSupabaseMiddlewareClient(request: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
-      "Supabase URL and anon key are required. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local."
+      "Supabase URL and anon key are required when using Supabase middleware. Omit calling this helper when NEXT_PUBLIC_SUPABASE_* are unset.",
     );
   }
 

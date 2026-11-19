@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 import type { ActionItem } from "@/src/lib/saq/engine/actions";
+import { formatCapabilityGap, formatEffortLabel } from "@/src/lib/saq/engine/scoring";
+
+function effortCell(item: ActionItem): string {
+  if (item.effortRequired) return formatEffortLabel(item.effortRequired);
+  if (item.suggestedEffort) return formatEffortLabel(item.suggestedEffort, true);
+  return "—";
+}
 
 interface ReportActionTableProps {
   actionItems: ActionItem[];
@@ -45,13 +52,16 @@ export function ReportActionTable({
               Impr. priority
             </th>
             <th className="border border-slate-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 print:px-2 print:py-1.5">
-              Impl. priority
+              When to act
             </th>
             <th className="border border-slate-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 print:px-2 print:py-1.5">
               Effort
             </th>
             <th className="border border-slate-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 print:px-2 print:py-1.5">
-              Leader
+              Gap
+            </th>
+            <th className="border border-slate-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 print:px-2 print:py-1.5">
+              Assignee
             </th>
             <th className="border border-slate-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 print:px-2 print:py-1.5">
               Deadline
@@ -60,7 +70,7 @@ export function ReportActionTable({
               Status
             </th>
             <th className="border border-slate-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-700 print:px-2 print:py-1.5">
-              Remarks
+              Next step
             </th>
           </tr>
         </thead>
@@ -82,7 +92,8 @@ export function ReportActionTable({
               )}
               {cell(item.improvementPriority)}
               {cell(item.implementationPriority)}
-              {cell(item.effortRequired)}
+              {cell(effortCell(item))}
+              {cell(formatCapabilityGap(item.capabilityGap))}
               {cell(item.leader)}
               {cell(item.deadline)}
               {cell(item.status)}

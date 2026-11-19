@@ -1,0 +1,12 @@
+# PostgreSQL pg_hba.conf — Docker Compose internal network
+#
+# Insert at the TOP of pg_hba.conf (before any "reject" rules for the app DB user).
+# Postgres in the Compose stack typically has ssl=off; app containers connect without SSL.
+#
+# Apply on the server (example container name grisc-postgres):
+#   docker exec grisc-postgres sed -i '1i hostnossl all all 172.16.0.0/12 scram-sha-256' /var/lib/postgresql/data/pg_hba.conf
+#   docker restart grisc-postgres
+#
+# See docs/DOCKER.md §8 for full troubleshooting (sign-up / sign-in failures).
+
+hostnossl all all 172.16.0.0/12 scram-sha-256

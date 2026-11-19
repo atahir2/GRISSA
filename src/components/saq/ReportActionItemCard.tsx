@@ -1,4 +1,11 @@
 import type { ActionItem } from "@/src/lib/saq/engine/actions";
+import { formatCapabilityGap, formatEffortLabel } from "@/src/lib/saq/engine/scoring";
+
+function effortText(item: ActionItem): string | undefined {
+  if (item.effortRequired) return formatEffortLabel(item.effortRequired);
+  if (item.suggestedEffort) return formatEffortLabel(item.suggestedEffort, true);
+  return undefined;
+}
 
 interface ReportActionItemCardProps {
   item: ActionItem;
@@ -37,8 +44,10 @@ export function ReportActionItemCard({ item, themeTitle, exportMode = false }: R
   if (exportMode) {
     const metaParts: string[] = [];
     metaParts.push(`Priority: ${item.improvementPriority}`);
-    if (item.implementationPriority) metaParts.push(`Implementation: ${item.implementationPriority}`);
-    if (item.effortRequired) metaParts.push(`Effort: ${item.effortRequired}`);
+    if (item.implementationPriority) metaParts.push(`When to act: ${item.implementationPriority}`);
+    const effort = effortText(item);
+    if (effort) metaParts.push(`Effort: ${effort}`);
+    metaParts.push(formatCapabilityGap(item.capabilityGap));
     const topMetaLine = metaParts.join(" · ");
 
     return (
@@ -68,7 +77,7 @@ export function ReportActionItemCard({ item, themeTitle, exportMode = false }: R
         {/* E. Lower metadata only: Leader, Deadline, Status (no Implementation/Effort) */}
         {hasLowerMeta && (
           <div className="mt-4 space-y-2.5 border-t border-slate-100 pt-3">
-            {item.leader && <MetaRow label="Leader" value={item.leader} />}
+            {item.leader && <MetaRow label="Assignee" value={item.leader} />}
             {item.deadline && <MetaRow label="Deadline" value={item.deadline} />}
             {item.status && <MetaRow label="Status" value={item.status} />}
           </div>
@@ -77,7 +86,7 @@ export function ReportActionItemCard({ item, themeTitle, exportMode = false }: R
         {/* F. Remarks only if present */}
         {item.remarks && (
           <div className="mt-4 rounded-md bg-slate-50 px-3 py-2 text-[13px] leading-relaxed text-slate-700">
-            <span className="font-semibold text-slate-800">Remarks:</span>{" "}
+            <span className="font-semibold text-slate-800">Next step:</span>{" "}
             {item.remarks}
           </div>
         )}
@@ -87,8 +96,10 @@ export function ReportActionItemCard({ item, themeTitle, exportMode = false }: R
 
   const topMetaParts: string[] = [];
   topMetaParts.push(`Priority: ${item.improvementPriority}`);
-  if (item.implementationPriority) topMetaParts.push(`Implementation: ${item.implementationPriority}`);
-  if (item.effortRequired) topMetaParts.push(`Effort: ${item.effortRequired}`);
+  if (item.implementationPriority) topMetaParts.push(`When to act: ${item.implementationPriority}`);
+  const screenEffort = effortText(item);
+  if (screenEffort) topMetaParts.push(`Effort: ${screenEffort}`);
+  topMetaParts.push(formatCapabilityGap(item.capabilityGap));
   const topMetaLineScreen = topMetaParts.join(" · ");
   const hasLowerMetaScreen = item.leader || item.deadline || item.status;
 
@@ -116,7 +127,7 @@ export function ReportActionItemCard({ item, themeTitle, exportMode = false }: R
       {/* D. Lower metadata only: Leader, Deadline, Status */}
       {hasLowerMetaScreen && (
         <div className="mt-4 flex flex-wrap gap-2">
-          {item.leader && metaPill("Leader", item.leader)}
+          {item.leader && metaPill("Assignee", item.leader)}
           {item.deadline && metaPill("Deadline", item.deadline)}
           {item.status && metaPill("Status", item.status)}
         </div>
@@ -125,7 +136,7 @@ export function ReportActionItemCard({ item, themeTitle, exportMode = false }: R
       {/* D. Remarks (only show if present) */}
       {item.remarks && (
         <div className="mt-4 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          <span className="font-semibold text-slate-800">Remarks:</span>{" "}
+          <span className="font-semibold text-slate-800">Next step:</span>{" "}
           {item.remarks}
         </div>
       )}

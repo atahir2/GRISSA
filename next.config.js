@@ -1,21 +1,24 @@
 /** @type {import('next').NextConfig} */
 
-const resolvedBasePath =
-  process.env.NEXT_PUBLIC_BASE_PATH !== undefined
-    ? process.env.NEXT_PUBLIC_BASE_PATH
-    : process.env.NODE_ENV === "production"
-      ? "/grisc-sa"
-      : "";
+/** Trim; avoid trailing slash unless you truly need "" at root only. Default: deploy at origin root. */
+function resolveBasePath() {
+  if (process.env.NEXT_PUBLIC_BASE_PATH === undefined) {
+    return "";
+  }
+  return String(process.env.NEXT_PUBLIC_BASE_PATH).trim().replace(/\/+$/, "");
+}
+
+const resolvedBasePath = resolveBasePath();
 
 const nextConfig = {
+  /** Self-contained output for Docker / Node hosting (`node .next/standalone/server.js`). */
+  output: "standalone",
+
   /**
-   * Production is served at https://host/grisc-sa/ — Next must use this prefix on all
-   * redirects and client navigations. Without it, /saq is sent to https://host/saq (404).
-   *
-   * Reverse proxy must forward the FULL URI to Node (e.g. /grisc-sa/saq), not strip /grisc-sa.
+   * Optional URL prefix — set at **build time** (e.g. NEXT_PUBLIC_BASE_PATH=/grisc-sa).
+   * Root deploy: unset or NEXT_PUBLIC_BASE_PATH= (Dockerfile default empty).
+   * Subpath: reverse-proxy must forward the full path to Node (/grisc-sa/... unchanged).
    * See scripts/nginx-subpath.example.conf
-   *
-   * Override: NEXT_PUBLIC_BASE_PATH=  (empty) at build time if deploy at site root.
    */
   basePath: resolvedBasePath,
 
@@ -33,6 +36,25 @@ const nextConfig = {
         destination: "/saq",
         permanent: true,
       },
+    ];
+  },
+
+  /**
+   * NEXTAUTH_URL includes the site prefix (https://host/grissa). NextAuth then
+   * uses that prefix as its auth base, so Google returns to /grissa/callback/google.
+   * The handler is mounted at /api/auth/*. These rewrites connect the two.
+   */
+  async rewrites() {
+    return [
+      { source: "/signin", destination: "/api/auth/signin" },
+      { source: "/signin/:path*", destination: "/api/auth/signin/:path*" },
+      { source: "/callback/:path*", destination: "/api/auth/callback/:path*" },
+      { source: "/signout", destination: "/api/auth/signout" },
+      { source: "/session", destination: "/api/auth/session" },
+      { source: "/csrf", destination: "/api/auth/csrf" },
+      { source: "/providers", destination: "/api/auth/providers" },
+      { source: "/error", destination: "/api/auth/error" },
+      { source: "/_log", destination: "/api/auth/_log" },
     ];
   },
 };

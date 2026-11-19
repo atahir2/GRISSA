@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenDIGIT Commons Initiative · OpenGreenCompute</title>
+<meta name="description" content="The GreenDIGIT Commons Initiative catalogues, maintains, and operates the outcomes of the GreenDIGIT project beyond the project timeline.">
+<style>
+  :root {
+    --green-900: #0f3d2e;
+    --green-700: #1d6b4f;
+    --green-500: #2f9e6f;
+    --green-100: #e6f4ec;
+    --ink: #1c2421;
+    --muted: #5b6a64;
+    --line: #dbe5e0;
+    --bg: #f7faf8;
+    --card: #ffffff;
+    --amber: #b7791f;
+    --amber-bg: #fdf3e1;
+    --grey-bg: #eef1f0;
+    --radius: 12px;
+    --max: 1120px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: var(--green-700); }
+  a:hover { color: var(--green-900); }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+  .skip { position: absolute; left: -999px; top: 0; background: var(--green-900); color: #fff; padding: 8px 14px; z-index: 10; }
+  .skip:focus { left: 8px; top: 8px; }
+
+  /* Funding bar */
+  .funding {
+    background: #fff; border-bottom: 1px solid var(--line);
+    font-size: 0.85rem; color: var(--muted);
+  }
+  .funding .wrap { display: flex; align-items: center; gap: 16px; padding-top: 10px; padding-bottom: 10px; flex-wrap: wrap; }
+  .funding img { height: 34px; width: auto; }
+
+  /* Nav */
+  header.site { background: var(--green-900); color: #fff; position: sticky; top: 0; z-index: 5; }
+  header.site .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+  .brand { color: #fff; text-decoration: none; font-weight: 700; letter-spacing: 0.2px; }
+  .brand small { display: block; font-weight: 400; opacity: 0.75; font-size: 0.78rem; }
+  nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 20px; flex-wrap: wrap; }
+  nav a { color: #d8efe4; text-decoration: none; font-size: 0.95rem; }
+  nav a:hover { color: #fff; text-decoration: underline; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 100%);
+    color: #fff; padding: 72px 0 64px;
+  }
+  .hero .eyebrow { text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.8rem; opacity: 0.8; margin: 0 0 8px; }
+  .hero h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; margin: 0 0 18px; }
+  .hero p.lead { font-size: 1.15rem; max-width: 760px; margin: 0 0 28px; color: #e3f3eb; }
+  .btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 11px 20px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+  .btn.primary { background: #fff; color: var(--green-900); }
+  .btn.primary:hover { background: var(--green-100); color: var(--green-900); }
+  .btn.ghost { border: 1.5px solid rgba(255,255,255,0.7); color: #fff; }
+  .btn.ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  section { padding: 64px 0; }
+  section.alt { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  h2 { font-size: 1.75rem; margin: 0 0 10px; color: var(--green-900); }
+  .section-intro { color: var(--muted); max-width: 760px; margin: 0 0 32px; }
+
+  /* Pillars */
+  .grid { display: grid; gap: 20px; }
+  .grid.five { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .grid.three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .pillar { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .pillar .icon { width: 42px; height: 42px; border-radius: 10px; background: var(--green-100); display: grid; place-items: center; margin-bottom: 12px; }
+  .pillar .icon svg { width: 22px; height: 22px; stroke: var(--green-700); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .pillar h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .pillar p { margin: 0; color: var(--muted); font-size: 0.93rem; }
+
+  /* Catalogue */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .filter {
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    padding: 7px 14px; border-radius: 999px; cursor: pointer; font-size: 0.9rem; font-family: inherit;
+  }
+  .filter[aria-pressed="true"] { background: var(--green-700); border-color: var(--green-700); color: #fff; }
+  .tool { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; }
+  .tool.placeholder { border-style: dashed; background: #fbfdfc; }
+  .tool .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tag { font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; background: var(--green-100); color: var(--green-900); font-weight: 600; }
+  .status { font-size: 0.75rem; padding: 3px 10px; border-radius: 999px; font-weight: 600; }
+  .status.maintained { background: #dff5e8; color: #17603f; }
+  .status.besteffort { background: var(--amber-bg); color: var(--amber); }
+  .status.archived { background: var(--grey-bg); color: var(--muted); }
+  .status.planned { background: #eaf0fb; color: #2c5aa0; }
+  .tool h3 { margin: 0 0 6px; font-size: 1.15rem; }
+  .tool p { margin: 0 0 14px; color: var(--muted); font-size: 0.94rem; flex-grow: 1; }
+  .tool dl { margin: 0 0 14px; font-size: 0.85rem; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+  .tool dt { color: var(--muted); }
+  .tool dd { margin: 0; }
+  .tool .links { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.92rem; font-weight: 600; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.88rem; color: var(--muted); margin-top: 28px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* Steps */
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  ol.steps li { counter-increment: s; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 22px 22px 64px; position: relative; }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 20px; top: 20px;
+    width: 30px; height: 30px; border-radius: 50%; background: var(--green-700); color: #fff;
+    display: grid; place-items: center; font-weight: 700; font-size: 0.9rem;
+  }
+  ol.steps h3 { margin: 0 0 4px; font-size: 1rem; }
+  ol.steps p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  /* Ambassadors */
+  .person { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: flex; gap: 14px; align-items: center; }
+  .avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--green-100); color: var(--green-900); display: grid; place-items: center; font-weight: 700; flex-shrink: 0; }
+  .person h3 { margin: 0; font-size: 1rem; }
+  .person p { margin: 0; color: var(--muted); font-size: 0.88rem; }
+
+  .cta { background: var(--green-100); border: 1px solid #c7e6d5; border-radius: var(--radius); padding: 28px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 28px; }
+  .cta h3 { margin: 0 0 4px; color: var(--green-900); }
+  .cta p { margin: 0; color: var(--muted); }
+  .cta .btn.primary { background: var(--green-700); color: #fff; }
+  .cta .btn.primary:hover { background: var(--green-900); }
+
+  footer { background: var(--green-900); color: #cfe7db; padding: 40px 0; font-size: 0.9rem; }
+  footer .wrap { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  footer a { color: #fff; }
+  footer h4 { color: #fff; margin: 0 0 8px; font-size: 0.95rem; }
+  footer p { margin: 0 0 6px; }
+  .bottom { border-top: 1px solid rgba(255,255,255,0.15); margin-top: 28px; padding-top: 18px; text-align: center; font-size: 0.82rem; opacity: 0.8; }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- EU funding notice: keep the same logo files you use on the home page -->
+<div class="funding">
+  <div class="wrap">
+    <img src="/EN-Funded-by-the-EU-POS-2.png" alt="Funded by the European Union">
+    <a href="https://greendigit-project.eu/"><img src="/cropped-GD_logo.png" alt="GreenDIGIT project"></a>
+    <span>Funded by the European Union's Horizon Europe programme through the GreenDIGIT project, Grant Agreement No. 101131207.</span>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="/">GreenDIGIT Commons</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#catalogue">Catalogue</a></li>
+        <li><a href="#sustain">How we sustain</a></li>
+        <li><a href="/#ambassadors">Ambassadors</a></li>
+        <li><a href="#contribute">Get involved</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="hero">
+    <div class="wrap">
+      <h1>GreenDIGIT Commons Initiative</h1>
+      <p class="lead">This page is created to catalogue, maintain, and operate the outcomes of the GreenDIGIT project beyond the project timeline. GreenDIGIT has produced important architectural, policy, impact analysis, and monitoring and optimisation tools for Research Infrastructures (RIs). The Commons brings them together in one place, with clear ownership, support levels, and a community of users who keep them in use.</p>
+      <div class="btns">
+        <a class="btn primary" href="#catalogue">Browse the catalogue</a>
+        <a class="btn ghost" href="#contribute">Join the Commons</a>
+      </div>
+    </div>
+  </div>
+
+  <section id="about">
+    <div class="wrap">
+      <h2>On this page, you find</h2>
+      <p class="section-intro">The outcomes of GreenDIGIT grouped by what they help Research Infrastructures do, along with who maintains each one and how to get started.</p>
+      <div class="grid five">
+        <div class="pillar">
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 17.5h7M17.5 14v7"/></svg></div>
+          <h3>Architectures</h3>
+          <p>Reference architectures and blueprints for energy-aware, low-carbon digital research infrastructures.</p>
+        </div>
+        <div class="pillar">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div>
+          <h3>Policy &amp; guidance</h3>
+          <p>Recommendations, maturity models, and guidelines that help RIs set and track sustainability goals.</p>
+        </div>
+        <div class="pillar">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+          <h3>Impact analysis</h3>
+          <p>Methods and tools to assess the environmental footprint and sustainability maturity of RIs.</p>
+        </div>
+        <div class="pillar">
+          <div class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+          <h3>Monitoring</h3>
+          <p>Pipelines to collect, harmonise, and publish energy and environmental metrics across distributed sites.</p>
+        </div>
+        <div class="pillar">
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <h3>Optimisation</h3>
+          <p>Software that schedules and places workloads to cut energy use and carbon emissions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="catalogue" class="alt">
+    <div class="wrap">
+      <h2>Tool catalogue</h2>
+      <p class="section-intro">Each entry shows its category, current support status, and maintaining institution. Filter by category to find what you need.</p>
+
+      <div class="filters" role="group" aria-label="Filter tools by category">
+        <button class="filter" aria-pressed="true" data-filter="all">All</button>
+        <button class="filter" aria-pressed="false" data-filter="architecture">Architectures</button>
+        <button class="filter" aria-pressed="false" data-filter="policy">Policy &amp; guidance</button>
+        <button class="filter" aria-pressed="false" data-filter="impact">Impact analysis</button>
+        <button class="filter" aria-pressed="false" data-filter="monitoring">Monitoring</button>
+        <button class="filter" aria-pressed="false" data-filter="optimisation">Optimisation</button>
+      </div>
+
+      <div class="grid three" id="tools">
+
+        <article class="tool" data-cat="impact policy">
+          <div class="meta"><span class="tag">Impact analysis</span><span class="tag">Policy</span><span class="status maintained">Maintained</span></div>
+          <h3>GRISSA</h3>
+          <p>A self-assessment tool for research infrastructure sustainability maturity. Use it to identify gaps and plan improvements.</p>
+          <dl>
+            <dt>Maintainer</dt><dd>[Institution]</dd>
+            <dt>Contact</dt><dd>[name@institution]</dd>
+            <dt>Licence</dt><dd>[e.g. Apache-2.0]</dd>
+          </dl>
+          <div class="links">
+            <a href="/gd-commons/grissa/saq">Open GRISSA →</a>
+            <a href="#">Docs</a>
+          </div>
+        </article>
+
+        <article class="tool" data-cat="monitoring">
+          <div class="meta"><span class="tag">Monitoring</span><span class="status maintained">Maintained</span></div>
+          <h3>EIMPS</h3>
+          <p>A pipeline for collecting, harmonising, and publishing environmental impact metrics from distributed research infrastructures.</p>
+          <dl>
+            <dt>Maintainer</dt><dd>[Institution]</dd>
+            <dt>Contact</dt><dd>[name@institution]</dd>
+            <dt>Licence</dt><dd>[e.g. Apache-2.0]</dd>
+          </dl>
+          <div class="links">
+            <a href="https://github.com/">Source on GitHub →</a>
+            <a href="#">Docs</a>
+          </div>
+        </article>
+
+        <!-- Placeholder entries: copy one of the cards above and fill in when ready -->
+        <article class="tool placeholder" data-cat="architecture">
+          <div class="meta"><span class="tag">Architectures</span><span class="status planned">Being added</span></div>
+          <h3>[Reference architecture]</h3>
+          <p>[Short description of the GreenDIGIT reference architecture or blueprint for sustainable digital RIs.]</p>
+          <dl>
+            <dt>Maintainer</dt><dd>[Institution]</dd>
+            <dt>Output</dt><dd>[Deliverable / DOI]</dd>
+          </dl>
+          <div class="links"><a href="#">Read more →</a></div>
+        </article>
+
+        <article class="tool placeholder" data-cat="policy">
+          <div class="meta"><span class="tag">Policy &amp; guidance</span><span class="status planned">Being added</span></div>
+          <h3>[Policy recommendations]</h3>
+          <p>[Short description of the policy brief or guidelines for RI operators and funders.]</p>
+          <dl>
+            <dt>Maintainer</dt><dd>[Institution]</dd>
+            <dt>Output</dt><dd>[Deliverable / DOI]</dd>
+          </dl>
+          <div class="links"><a href="#">Read more →</a></div>
+        </article>
+
+        <article class="tool placeholder" data-cat="optimisation">
+          <div class="meta"><span class="tag">Optimisation</span><span class="status planned">Being added</span></div>
+          <h3>[Optimisation tool]</h3>
+          <p>[Short description of the energy- or carbon-aware scheduling / placement tool.]</p>
+          <dl>
+            <dt>Maintainer</dt><dd>[Institution]</dd>
+            <dt>Licence</dt><dd>[Licence]</dd>
+          </dl>
+          <div class="links"><a href="#">Source →</a></div>
+        </article>
+
+        <article class="tool placeholder" data-cat="monitoring impact">
+          <div class="meta"><span class="tag">Monitoring</span><span class="status planned">Being added</span></div>
+          <h3>[Monitoring / dashboard tool]</h3>
+          <p>[Short description of the energy or carbon monitoring tool or dashboard.]</p>
+          <dl>
+            <dt>Maintainer</dt><dd>[Institution]</dd>
+            <dt>Licence</dt><dd>[Licence]</dd>
+          </dl>
+          <div class="links"><a href="#">Source →</a></div>
+        </article>
+
+      </div>
+
+      <div class="legend" aria-label="Status legend">
+        <span><span class="status maintained">Maintained</span> actively developed and supported</span>
+        <span><span class="status besteffort">Best effort</span> usable; support when capacity allows</span>
+        <span><span class="status archived">Archived</span> preserved with DOI, no longer developed</span>
+        <span><span class="status planned">Being added</span> listing in preparation</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="sustain">
+    <div class="wrap">
+      <h2>How we sustain the outcomes</h2>
+      <p class="section-intro">The Commons is a lightweight, partner-driven commitment, not a new project. Every listed outcome follows these four commitments.</p>
+      <ol class="steps">
+        <li><h3>Clear ownership</h3><p>Each tool has a named maintaining institution, contact person, and declared support level.</p></li>
+        <li><h3>Durable homes</h3><p>Code lives in a shared repository, releases get Zenodo DOIs and are archived in Software Heritage, and services are listed in the EOSC catalogue.</p></li>
+        <li><h3>Continued use</h3><p>Ambassadors run tutorials, collect feedback, and connect tools to new RIs, projects, and communities.</p></li>
+        <li><h3>Onward funding</h3><p>Partners build on Commons tools in new proposals and report their reuse in Horizon Europe exploitation plans.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="contribute" class="alt">
+    <div class="wrap">
+      <h2>Get involved</h2>
+      <p class="section-intro">Whether you operate an RI, develop tools, or fund research infrastructure, there is a way to take part.</p>
+      <div class="grid three">
+        <div class="pillar"><h3>Use a tool</h3><p>Try a tool from the catalogue and tell us how it worked for your infrastructure. Use cases help us prioritise.</p></div>
+        <div class="pillar"><h3>Become an ambassador</h3><p>Champion one or more tools in your community, run a training session, or co-author a use-case report.</p></div>
+        <div class="pillar"><h3>Maintain or extend</h3><p>Contribute code, documentation, or integrations, or take over maintenance of a tool within your organisation.</p></div>
+      </div>
+      <div class="cta">
+        <div>
+          <h3>Join the GreenDIGIT Commons</h3>
+          <p>Get in touch to list an outcome, become an ambassador, or collaborate.</p>
+        </div>
+        <a class="btn primary" href="mailto:[contact@opengreencompute.org]">Contact us</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <h4>GreenDIGIT Commons</h4>
+      <p>Towards more sustainable computation.</p>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <p><a href="https://greendigit-project.eu/">GreenDIGIT website</a></p>
+      <p><a href="https://cordis.europa.eu/project/id/101131207">CORDIS record</a></p>
+    </div>
+    <div>
+      <h4>Funding</h4>
+      <p>Funded by the European Union's Horizon Europe programme, Grant Agreement No. 101131207. Views and opinions expressed are those of the author(s) only and do not necessarily reflect those of the European Union.</p>
+    </div>
+  </div>
+  <div class="wrap bottom">© <span id="yr"></span> GreenDIGIT Commons Initiative</div>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  const buttons = document.querySelectorAll('.filter');
+  const tools = document.querySelectorAll('#tools .tool');
+  buttons.forEach(btn => btn.addEventListener('click', () => {
+    buttons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    const f = btn.dataset.filter;
+    tools.forEach(t => {
+      t.style.display = (f === 'all' || t.dataset.cat.split(' ').includes(f)) ? '' : 'none';
+    });
+  }));
+</script>
+</body>
+</html>

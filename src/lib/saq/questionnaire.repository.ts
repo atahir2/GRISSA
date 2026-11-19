@@ -1,6 +1,5 @@
 import questionnaireData from "./questionnaire.data.json";
 import type {
-  AnswerOption,
   QuestionnaireConfig,
   Question,
   ScopeItem,

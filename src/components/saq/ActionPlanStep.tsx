@@ -1,5 +1,9 @@
 import type { ActionPlan } from "@/src/lib/saq/engine/actions";
-import type { EffortRequired } from "@/src/lib/saq/engine/scoring";
+import {
+  effortSizeLabel,
+  formatCapabilityGap,
+  type EffortRequired,
+} from "@/src/lib/saq/engine/scoring";
 import { SectionHeader } from "./SectionHeader";
 import { SummaryCard } from "./SummaryCard";
 import { PriorityBadge } from "./PriorityBadge";
@@ -14,7 +18,8 @@ export type ActionMetadataPatch = {
 
 interface ActionPlanStepProps {
   actionPlan: ActionPlan;
-  onEffortChange: (questionId: string, effort: EffortRequired) => void;
+  assigneeOptions?: string[];
+  onEffortChange: (questionId: string, effort: EffortRequired | undefined) => void;
   onActionMetadataChange?: (questionId: string, patch: ActionMetadataPatch) => void;
   readOnly?: boolean;
 }
@@ -26,8 +31,13 @@ const STATUS_OPTIONS: Array<"Planned" | "In Progress" | "Completed"> = [
   "Completed",
 ];
 
+function keptText(value: string): string | undefined {
+  return value.trim() ? value : undefined;
+}
+
 export function ActionPlanStep({
   actionPlan,
+  assigneeOptions = [],
   onEffortChange,
   onActionMetadataChange,
   readOnly = false,
@@ -43,7 +53,7 @@ export function ActionPlanStep({
       )}
       <SectionHeader
         title="Action Plan"
-        subtitle="Prioritised actions derived from your answers. Set effort required and optionally assign leader, deadline, status and remarks for each item."
+        subtitle="Effort (S, M, L) is the size of the work. You choose it. When to act (Immediate, Urgent, Planned) is calculated from how important the gap is, that effort, and how far the topic is from its target. A suggestion appears only while effort is empty, and it is kept only when you choose it."
       />
 
       <section>
@@ -57,19 +67,21 @@ export function ActionPlanStep({
             accent="primary"
           />
           <SummaryCard
-            label="High / Medium / Low"
-            value={`${summary.highPriorityCount} / ${summary.mediumPriorityCount} / ${summary.lowPriorityCount}`}
+            className="sm:col-span-2"
+            label="Importance"
+            value={`${summary.highPriorityCount} High · ${summary.mediumPriorityCount} Medium · ${summary.lowPriorityCount} Low`}
           />
           <SummaryCard
-            label="Immediate / Urgent / Planned"
-            value={`${summary.immediateCount} / ${summary.urgentCount} / ${summary.plannedCount}`}
+            className="sm:col-span-2"
+            label="When to act"
+            value={`${summary.immediateCount} Immediate · ${summary.urgentCount} Urgent · ${summary.plannedCount} Planned`}
           />
           <SummaryCard
-            label="Low priority impl."
+            label="When: low priority"
             value={summary.lowPriorityImplementationCount}
           />
           <SummaryCard
-            label="No action needed"
+            label="When: no action"
             value={summary.noActionNeededCount}
           />
         </div>
@@ -79,13 +91,24 @@ export function ActionPlanStep({
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
           Action items
         </h3>
+        {assigneeOptions.length > 0 && (
+          <datalist id="action-plan-assignees">
+            {assigneeOptions.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        )}
         {actionPlan.actionItems.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
             No action items. Complete the questionnaire and review results first; items are generated for in-scope questions with improvement priorities.
           </div>
         ) : (
           <ul className="space-y-4">
-            {actionPlan.actionItems.map((item) => (
+            {actionPlan.actionItems.map((item) => {
+              const suggestedLabel = item.suggestedEffort
+                ? effortSizeLabel(item.suggestedEffort)
+                : undefined;
+              return (
               <li
                 key={item.questionId}
                 className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
@@ -97,10 +120,15 @@ export function ActionPlanStep({
                         <span className="rounded bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
                           {item.questionCode}
                         </span>
+                        <span className="text-xs text-slate-500">Importance</span>
                         <PriorityBadge level={item.improvementPriority} />
+                        <span className="text-xs text-slate-500">When to act</span>
                         <ImplementationPriorityBadge
                           value={item.implementationPriority}
                         />
+                        <span className="text-xs text-slate-500">
+                          {formatCapabilityGap(item.capabilityGap)}
+                        </span>
                       </div>
                       <p className="text-sm font-medium text-slate-900">
                         {item.questionText}
@@ -112,59 +140,66 @@ export function ActionPlanStep({
                         {item.recommendedAction}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center lg:flex-col lg:items-stretch">
+                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end lg:flex-col lg:items-stretch">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-slate-600">
-                          Effort required
+                          Effort (size of the work)
                         </label>
                         <select
                           disabled={readOnly}
+                          aria-label={`Effort for ${item.questionCode}`}
                           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100 sm:w-auto lg:w-full"
                           value={item.effortRequired ?? ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const value = e.target.value;
                             onEffortChange(
                               item.questionId,
-                              e.target.value as EffortRequired
-                            )
-                          }
+                              value ? (value as EffortRequired) : undefined
+                            );
+                          }}
                         >
-                          <option value="">Set effort…</option>
+                          <option value="">
+                            {suggestedLabel ? `Suggested: ${suggestedLabel}` : "Set effort…"}
+                          </option>
                           {EFFORT_OPTIONS.map((opt) => (
                             <option key={opt} value={opt}>
-                              {opt}
+                              {effortSizeLabel(opt)}
                             </option>
                           ))}
                         </select>
+                        <p className="mt-1 text-[11px] text-slate-500">S small, M medium, L large</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">
-                          Impl. priority:
-                        </span>
-                        <ImplementationPriorityBadge
-                          value={item.implementationPriority}
-                        />
-                      </div>
+                      {suggestedLabel && !readOnly && (
+                        <button
+                          type="button"
+                          className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100"
+                          onClick={() => onEffortChange(item.questionId, item.suggestedEffort)}
+                        >
+                          Use {suggestedLabel}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {onActionMetadataChange && (
                     <div className={`border-t border-slate-200 bg-slate-50/50 px-4 py-3 ${readOnly ? "opacity-90" : ""}`}>
                       <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Optional: assign and track
+                        Assign and track
                       </p>
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                           <label className="mb-0.5 block text-xs font-medium text-slate-600">
-                            Leader
+                            Assignee
                           </label>
                           <input
                             type="text"
+                            list="action-plan-assignees"
                             disabled={readOnly}
                             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100"
-                            placeholder="Name or role"
+                            placeholder="Person or team"
                             value={item.leader ?? ""}
                             onChange={(e) =>
                               onActionMetadataChange(item.questionId, {
-                                leader: e.target.value.trim() || undefined,
+                                leader: keptText(e.target.value),
                               })
                             }
                           />
@@ -212,19 +247,19 @@ export function ActionPlanStep({
                             ))}
                           </select>
                         </div>
-                        <div className="sm:col-span-2 lg:col-span-1">
+                        <div className="sm:col-span-2 lg:col-span-4">
                           <label className="mb-0.5 block text-xs font-medium text-slate-600">
-                            Remarks
+                            Next step
                           </label>
-                          <input
-                            type="text"
+                          <textarea
+                            rows={2}
                             disabled={readOnly}
                             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-100"
-                            placeholder="Notes"
+                            placeholder="What happens next"
                             value={item.remarks ?? ""}
                             onChange={(e) =>
                               onActionMetadataChange(item.questionId, {
-                                remarks: e.target.value.trim() || undefined,
+                                remarks: keptText(e.target.value),
                               })
                             }
                           />
@@ -234,7 +269,8 @@ export function ActionPlanStep({
                   )}
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </section>

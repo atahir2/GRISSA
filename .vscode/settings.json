@@ -1,0 +1,10 @@
+{
+    "window.density.editorTabHeight": "compact",
+    "workbench.editor.tabActionLocation": "right",
+    "workbench.editor.tabSizing": "fit",
+    "workbench.editor.tabActionUnpinVisibility": true,
+    "workbench.editor.untitled.labelFormat": "content",
+    "workbench.editor.wrapTabs": false,
+    "workbench.settings.editor": "ui",
+    "editor.renderWhitespace": "selection"
+}

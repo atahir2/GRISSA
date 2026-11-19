@@ -1,0 +1,20 @@
+---
+description: Optional questionnaire help text and clause references
+globs: "{src/lib/saq/questionnaire.*,src/lib/saq/standards.*,src/components/saq/QuestionGuidance.tsx,src/components/saq/QuestionnaireStep.tsx,src/components/saq/CapabilitySelector.tsx}"
+alwaysApply: false
+---
+
+# Questionnaire guidance
+
+Help text lives only in `questionnaire.data.json`. It is not stored in the database and does not change scores.
+
+Optional fields: `whyItMatters`, `answerOptions[].levelInPractice`, `commonEvidence` (`text`, `supportsLevel`), `standardClauses` (`standardId`, optional `clause`), `policyCategories`, `reportingRequirements`.
+
+- Hide a field when it is empty. Do not show a placeholder.
+- `standardId` must exist in `standards.data.json`. Show a clause label only when `clause` is set.
+- Show guidance in one collapsed **Help** panel per question: why it matters, the three level descriptions with the selected level marked, in-practice and common-evidence notes under the matching level, evidence expected, and related requirements. The selected level still shows its description beside the buttons. Keep policy categories and reporting requirements stored for later export. Do not build a mapping browser.
+- Every question has checklist lines in `commonEvidence`. Governance and Compliance (G1.1–G5.1) was the worked example and is not in the D8.1 workbook. The other six themes use the same shape, and those lines were accepted. Each question has no level 1 line, one level 2 line, and two level 3 lines. Column R stays the “Evidence required” phrase. Do not add further checklist sentences unless the wording is reviewed.
+- On the Evidence step, group checklist lines under one heading per level (“To achieve level 2:”) and number the lines. Do not repeat the heading on each line. Help lists the same lines under the level description, without repeating “To achieve level”.
+- D8.1 column N, `Descriptions`, is already `answerOptions[].description` for every question. Show those three lines inside Help, and the selected one beside the level buttons. Do not copy column N into a second field.
+- D8.1 column R, `Evidence Type Expected`, is `evidenceExpected` on every question. Show it inside Help as **Evidence expected**.
+- Do not invent help text. Add further lines only from reviewed source wording.

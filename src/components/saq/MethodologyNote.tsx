@@ -13,10 +13,16 @@ export function MethodologyNote() {
           Priorities are derived from impact magnitude, likelihood, and target/readiness gaps.
         </li>
         <li>
-          <strong>Improvement priority</strong> (High / Medium / Low) indicates the significance of the capability gap.
+          <strong>Importance</strong> (High / Medium / Low) is how significant the gap is.
         </li>
         <li>
-          <strong>Strategic sequencing</strong> labels (Immediate / Short term / Medium term / Consolidate) describe the suggested order or timeframe for implementation.
+          <strong>Effort</strong> (S / M / L) is the size of the work. It is chosen on the action plan.
+        </li>
+        <li>
+          <strong>When to act</strong> (Immediate / Urgent / Planned) is calculated from importance, effort, and the gap to target.
+        </li>
+        <li>
+          The opening recommendations (Immediate / Short term / Medium term / Consolidate) are overall advice for the organisation. They are separate from each action’s when-to-act label.
         </li>
         <li>
           The action plan is intended to guide <strong>sequencing and improvement planning</strong>.
