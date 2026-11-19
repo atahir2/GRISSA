@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OpenGreenCompute brings together reusable tools and efforts from the GreenDIGIT project towards more sustainable computation.">
+    <title>OpenGreenCompute</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #25302b;
+            background: #f5f7f4;
+        }
+        .container { max-width: 1040px; margin: 0 auto; padding: 40px 24px; }
+        a { color: #1f5f8f; text-underline-offset: 3px; }
+        a:hover { text-decoration-thickness: 2px; }
+        a:focus-visible { outline: 3px solid #1f5f8f; outline-offset: 5px; }
+        .skip-link { position: absolute; top: 8px; left: 8px; transform: translateY(-180%); }
+        .skip-link:focus { transform: translateY(0); background: #fff; padding: 8px 16px; }
+        .funding { border-bottom: 1px solid #dfe7df; padding-bottom: 28px; }
+        .funding-logos { display: flex; align-items: center; flex-wrap: wrap; gap: 28px 40px; }
+        .funding-logos a { display: inline-flex; }
+        .funding-logos img { display: block; max-width: 100%; height: auto; }
+        .eu-logo { width: 260px; }
+        .greendigit-logo { width: 128px; }
+        .funding p { color: #58645d; font-size: .9rem; max-width: 850px; margin: 24px 0 0; }
+        main { padding-top: 48px; }
+        h1 { color: #215f32; font-size: clamp(1.9rem, 6vw, 3.25rem); line-height: 1.15; letter-spacing: -.035em; margin: 0 0 20px; overflow-wrap: anywhere; }
+        .intro { color: #4f5f55; font-size: 1.1rem; max-width: 800px; margin: 0; }
+        .tools { margin-top: 44px; }
+        .tools > h2 { color: #215f32; font-size: 1.3rem; margin: 0 0 18px; }
+        .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+        .action-card { background: #fff; border: 1px solid #dfe7df; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.04); padding: 28px; display: flex; flex-direction: column; align-items: flex-start; }
+        .action-card h3 { color: #215f32; font-size: 1.2rem; margin: 0 0 10px; }
+        .action-card p { color: #59655d; font-size: .98rem; margin: 0 0 24px; }
+        .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: auto; padding: 10px 18px; border-radius: 6px; background: #215f32; color: #fff; text-decoration: none; font-weight: 650; }
+        .button:hover { background: #174925; }
+        .button.secondary { background: #1f5f8f; }
+        .button.secondary:hover { background: #184b71; }
+        footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #dfe7df; color: #58645d; font-size: .9rem; }
+        footer p { margin: 0; }
+        @media (max-width: 640px) {
+            .container { padding: 28px 20px; }
+            .funding-logos { gap: 24px; }
+            .eu-logo { width: 230px; }
+            .greendigit-logo { width: 104px; }
+            main { padding-top: 32px; }
+            .actions { grid-template-columns: 1fr; }
+            .action-card { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="container">
+        <header class="funding" aria-label="Project and funding acknowledgement">
+            <div class="funding-logos">
+                <img src="/EN-Funded-by-the-EU-POS-2.png" alt="Funded by the European Union" class="eu-logo" width="1000" height="210">
+                <a href="https://greendigit-project.eu/" aria-label="Visit the GreenDIGIT project website">
+                    <img src="/cropped-GD_logo.png" alt="GreenDIGIT" class="greendigit-logo" width="1333" height="1003">
+                </a>
+            </div>
+            <p>This work is funded from the European Union’s Horizon Europe research and innovation programme through the <a href="https://greendigit-project.eu/">GreenDIGIT project</a>, under Grant Agreement No. <a href="https://cordis.europa.eu/project/id/101131207">101131207</a>.</p>
+        </header>
+
+        <main id="main">
+            <h1>OpenGreenCompute</h1>
+            <p class="intro">OpenGreenCompute brings together efforts from the GreenDIGIT project and the reusable tools developed through that work. It provides a shared starting point for exploring and using these tools towards more sustainable computation and research infrastructures.</p>
+
+            <p><a href="/greendigit-commons">Explore the GreenDIGIT Commons Initiative</a></p>
+
+            <section class="tools" aria-labelledby="tools-title">
+                <h2 id="tools-title">Explore the tools</h2>
+                <div class="actions">
+                    <article class="action-card">
+                        <h3>GRISSA</h3>
+                        <p>Assess the sustainability maturity of your research infrastructure, identify gaps, and plan practical improvements with the Green Research Infrastructure Sustainability Self Assessment tool.</p>
+                        <a class="button" href="/grissa/saq">Open GRISSA</a>
+                    </article>
+                    <article class="action-card">
+                        <h3>EIMPS</h3>
+                        <p>Collect, harmonise, and publish environmental impact metrics from distributed research infrastructures with the GreenDIGIT CIM and KPI pipeline.</p>
+                        <a class="button secondary" href="https://github.com/GreenDIGIT-project/GreenDIGIT-WP6-CIM-KPI-Pipeline">Explore EIMPS source</a>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Developed through <a href="https://greendigit-project.eu/">GreenDIGIT</a> | Towards more sustainable computation</p>
+        </footer>
+    </div>
+</body>
+</html>
